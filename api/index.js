@@ -122,11 +122,11 @@ function renderRow(r) {
       <td class="num">${yen(r.asking)}</td>
       <td class="num">${yen(r.income)}</td>
       <td class="num">${yen(r.ncf)}</td>
-      <td class="num cell-mortgage"></td>
       <td>${escapeHtml(location || "—")}</td>
       <td>${escapeHtml(r.structure || "—")}</td>
       <td>${r.yearBuilt ? escapeHtml(String(r.yearBuilt)) : "—"}${r.age ? ` <span class="muted">(${r.age}y)</span>` : ""}</td>
       <td><span class="pill ${statusClass(r.status)}">${escapeHtml(r.status || "—")}</span></td>
+      <td class="num cell-mortgage"></td>
       <td><input type="number" class="loan-input" data-field="loan_value" data-default="${attr(r.loanValue)}" value="${attr(r.loanValue)}" placeholder="—" step="100000" /></td>
       <td><input type="number" class="loan-input" data-field="loan_rate" data-default="${attr(r.loanRate)}" value="${attr(r.loanRate)}" placeholder="—" step="0.01" /></td>
       <td><input type="number" class="loan-input" data-field="loan_years" data-default="${attr(r.loanYears)}" value="${attr(r.loanYears)}" placeholder="—" step="1" /></td>
@@ -224,7 +224,7 @@ const CSS = `
 `;
 
 const CLIENT_JS = `
-  const STATUS_COL = 12;
+  const STATUS_COL = 11;
 
   function yen(n) {
     return n == null || isNaN(n) ? "—" : "¥" + Math.round(n).toLocaleString("en-US");
@@ -428,11 +428,11 @@ function renderPage(rows) {
           <th>Asking</th>
           <th>Income</th>
           <th>NCF</th>
-          <th>Mortgage</th>
           <th>Location</th>
           <th>Structure</th>
           <th>Year</th>
           <th>Status</th>
+          <th>Mortgage</th>
           <th>Loan ¥</th>
           <th>Rate %</th>
           <th>Years</th>
