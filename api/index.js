@@ -114,13 +114,6 @@ function renderRow(r) {
   const rNoLoan = r.ratingNoLoan || "—";
   const attr = (v) => (v == null || v === "" ? "" : String(v));
   const expenseDefault = r.expenseRatio != null && r.expenseRatio > 0 ? r.expenseRatio : 20;
-  const expenseOptions = [];
-  for (let i = 10; i <= 35; i++) {
-    expenseOptions.push(`<option value="${i}"${i === expenseDefault ? " selected" : ""}>${i}%</option>`);
-  }
-  const occupancyOptions = [70, 75, 80, 85, 90, 95, 100]
-    .map((v) => `<option value="${v}"${v === 100 ? " selected" : ""}>${v}%</option>`)
-    .join("");
   return `
     <tr data-page-id="${r.id}" data-income="${r.income ?? 0}" data-asking="${r.asking ?? 0}" data-name="${escapeHtml(r.name)}">
       <td><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.name)}</a></td>
@@ -136,8 +129,8 @@ function renderRow(r) {
       <td>${r.yearBuilt ? escapeHtml(String(r.yearBuilt)) : "—"}${r.age ? ` <span class="muted">(${r.age}y)</span>` : ""}</td>
       <td><span class="pill ${statusClass(r.status)}">${escapeHtml(r.status || "—")}</span></td>
       <td class="num cell-mortgage"></td>
-      <td><select class="loan-select" data-field="expense_ratio" data-default="${expenseDefault}">${expenseOptions.join("")}</select></td>
-      <td><select class="loan-select" data-field="occupancy" data-default="100">${occupancyOptions}</select></td>
+      <td><input type="number" class="loan-input" data-field="expense_ratio" data-default="${expenseDefault}" value="${expenseDefault}" min="0" max="50" step="1" /></td>
+      <td><input type="number" class="loan-input" data-field="occupancy" data-default="100" value="100" min="0" max="100" step="5" /></td>
       <td><input type="number" class="loan-input" data-field="loan_value" data-default="${attr(r.loanValue)}" value="${attr(r.loanValue)}" placeholder="—" step="100000" /></td>
       <td><input type="number" class="loan-input" data-field="loan_rate" data-default="${attr(r.loanRate)}" value="${attr(r.loanRate)}" placeholder="—" step="0.01" /></td>
       <td><input type="number" class="loan-input" data-field="loan_years" data-default="${attr(r.loanYears)}" value="${attr(r.loanYears)}" placeholder="—" step="1" /></td>
@@ -229,20 +222,9 @@ const CSS = `
     font-family: inherit;
   }
   .loan-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-  .loan-input.override, .loan-select.override { background: #fef9c3; border-color: #facc15; }
+  .loan-input.override { background: #fef9c3; border-color: #facc15; }
   .loan-input::-webkit-outer-spin-button,
   .loan-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  .loan-select {
-    padding: 3px 4px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    font-size: 13px;
-    background: white;
-    font-family: inherit;
-    font-variant-numeric: tabular-nums;
-    cursor: pointer;
-  }
-  .loan-select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
 
   .stress-btn {
@@ -378,16 +360,13 @@ const CLIENT_JS = `
 
   function recomputeRow(row) {
     const income = parseFloat(row.dataset.income) || 0;
-    const expenseSel = row.querySelector('[data-field="expense_ratio"]');
-    const occSel = row.querySelector('[data-field="occupancy"]');
-    const expensePct = parseFloat(expenseSel.value) || 20;
-    const occupancyPct = parseFloat(occSel.value) || 100;
+    const expensePct = parseFloat(row.querySelector('[data-field="expense_ratio"]').value) || 20;
+    const occupancyPct = parseFloat(row.querySelector('[data-field="occupancy"]').value) || 100;
     const ncf = income * (occupancyPct / 100) * (1 - expensePct / 100);
 
-    const inputs = row.querySelectorAll('.loan-input');
-    const lv = parseFloat(inputs[0].value) || 0;
-    const lr = parseFloat(inputs[1].value) || 0;
-    const ly = parseFloat(inputs[2].value) || 0;
+    const lv = parseFloat(row.querySelector('[data-field="loan_value"]').value) || 0;
+    const lr = parseFloat(row.querySelector('[data-field="loan_rate"]').value) || 0;
+    const ly = parseFloat(row.querySelector('[data-field="loan_years"]').value) || 0;
 
     let mortgage = 0, profit = ncf, rating = "";
     const hasLoan = lv > 0 && ly > 0;
@@ -424,7 +403,7 @@ const CLIENT_JS = `
       const pageId = row.dataset.pageId;
       let stored = {};
       try { stored = JSON.parse(localStorage.getItem('loan_' + pageId) || '{}'); } catch (e) {}
-      row.querySelectorAll('.loan-input, .loan-select').forEach(el => {
+      row.querySelectorAll('.loan-input').forEach(el => {
         const f = el.dataset.field;
         if (stored[f] !== undefined && stored[f] !== '') {
           el.value = stored[f];
@@ -449,15 +428,6 @@ const CLIENT_JS = `
       const row = input.closest('tr');
       saveOverride(row.dataset.pageId, input.dataset.field, input.value);
       updateInputStyle(input);
-      recomputeRow(row);
-    });
-  });
-
-  document.querySelectorAll('.loan-select').forEach(sel => {
-    sel.addEventListener('change', () => {
-      const row = sel.closest('tr');
-      saveOverride(row.dataset.pageId, sel.dataset.field, sel.value);
-      updateInputStyle(sel);
       recomputeRow(row);
     });
   });
@@ -601,13 +571,12 @@ const CLIENT_JS = `
     const name = row.dataset.name || 'Property';
     const income = parseFloat(row.dataset.income) || 0;
     const asking = parseFloat(row.dataset.asking) || 0;
-    const inputs = row.querySelectorAll('.loan-input');
-    const selects = row.querySelectorAll('.loan-select');
-    const lv = parseFloat(inputs[0].value) || Math.round(asking * 0.8);
-    const lr = parseFloat(inputs[1].value) || 2.5;
-    const ly = parseFloat(inputs[2].value) || 25;
-    const exp = parseFloat(selects[0].value) || 20;
-    const occ = parseFloat(selects[1].value) || 100;
+    const readField = f => parseFloat(row.querySelector('[data-field="' + f + '"]').value);
+    const lv = readField('loan_value') || Math.round(asking * 0.8);
+    const lr = readField('loan_rate') || 2.5;
+    const ly = readField('loan_years') || 25;
+    const exp = readField('expense_ratio') || 20;
+    const occ = readField('occupancy') || 100;
 
     stressIncome = income;
     stressRow = row;
@@ -633,25 +602,21 @@ const CLIENT_JS = `
     const lv = Math.round(parseFloat(sLv.value) || 0);
     const lr = parseFloat(sLr.value) || 0;
     const ly = Math.round(parseFloat(sLy.value) || 0);
-    // Snap occupancy to nearest allowed dropdown value [70, 75, ..., 100]
-    const rawOcc = parseFloat(sOcc.value) || 100;
-    const occ = Math.max(70, Math.min(100, Math.round(rawOcc / 5) * 5));
-    // Snap expense to nearest allowed dropdown value [10..35]
-    const rawExp = parseFloat(sExp.value) || 20;
-    const exp = Math.max(10, Math.min(35, Math.round(rawExp)));
+    const occ = parseFloat(sOcc.value) || 100;
+    const exp = parseFloat(sExp.value) || 20;
 
     const fields = [
-      { selector: '[data-field="loan_value"]', value: lv > 0 ? String(lv) : '' },
-      { selector: '[data-field="loan_rate"]', value: lr > 0 ? String(lr) : '' },
-      { selector: '[data-field="loan_years"]', value: ly > 0 ? String(ly) : '' },
-      { selector: '[data-field="occupancy"]', value: String(occ) },
-      { selector: '[data-field="expense_ratio"]', value: String(exp) },
+      { field: 'loan_value', value: lv > 0 ? String(lv) : '' },
+      { field: 'loan_rate', value: lr > 0 ? String(lr) : '' },
+      { field: 'loan_years', value: ly > 0 ? String(ly) : '' },
+      { field: 'occupancy', value: String(occ) },
+      { field: 'expense_ratio', value: String(exp) },
     ];
     fields.forEach(f => {
-      const el = row.querySelector(f.selector);
+      const el = row.querySelector('[data-field="' + f.field + '"]');
       if (!el) return;
       el.value = f.value;
-      saveOverride(row.dataset.pageId, el.dataset.field, f.value);
+      saveOverride(row.dataset.pageId, f.field, f.value);
       updateInputStyle(el);
     });
     recomputeRow(row);
@@ -805,7 +770,7 @@ function renderPage(rows) {
         </div>
 
         <div id="stress-verdict" class="verdict">—</div>
-        <div class="stress-note">Closing the modal applies these values to the row (except Misc Expenses, which has no row column). Expense & Occupancy snap to the nearest dropdown option.</div>
+        <div class="stress-note">Closing the modal applies these values to the row. Misc Expenses is modal-only (no row column).</div>
       </div>
     </div>
   </div>
