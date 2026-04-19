@@ -122,7 +122,7 @@ function renderRow(r) {
     .map((v) => `<option value="${v}"${v === 100 ? " selected" : ""}>${v}%</option>`)
     .join("");
   return `
-    <tr data-page-id="${r.id}" data-income="${r.income ?? 0}">
+    <tr data-page-id="${r.id}" data-income="${r.income ?? 0}" data-asking="${r.asking ?? 0}" data-name="${escapeHtml(r.name)}">
       <td><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.name)}</a></td>
       <td class="num">${pct(r.grossYield)}</td>
       <td><span class="${ratingClass(rNoLoan)}">${escapeHtml(rNoLoan)}</span></td>
@@ -141,6 +141,7 @@ function renderRow(r) {
       <td><input type="number" class="loan-input" data-field="loan_value" data-default="${attr(r.loanValue)}" value="${attr(r.loanValue)}" placeholder="—" step="100000" /></td>
       <td><input type="number" class="loan-input" data-field="loan_rate" data-default="${attr(r.loanRate)}" value="${attr(r.loanRate)}" placeholder="—" step="0.01" /></td>
       <td><input type="number" class="loan-input" data-field="loan_years" data-default="${attr(r.loanYears)}" value="${attr(r.loanYears)}" placeholder="—" step="1" /></td>
+      <td><button class="stress-btn" type="button">Stress Test</button></td>
     </tr>
   `;
 }
@@ -243,6 +244,111 @@ const CSS = `
   }
   .loan-select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
+
+  .stress-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
+  }
+  .stress-btn:hover { background: #1d4ed8; }
+
+  .modal { position: fixed; inset: 0; z-index: 1000; }
+  .modal.hidden { display: none; }
+  .modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.5); }
+  .modal-content {
+    position: relative;
+    max-width: 560px;
+    margin: 40px auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-header h2 { margin: 0; font-size: 16px; }
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: var(--muted);
+    padding: 0 8px;
+    line-height: 1;
+  }
+  .modal-close:hover { color: var(--fg); }
+  .modal-body {
+    padding: 20px;
+    overflow-y: auto;
+  }
+  .stress-fixed {
+    display: flex;
+    gap: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .slider-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 110px;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .slider-row label { color: #555; }
+  .slider-row input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent);
+  }
+  .slider-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .stress-breakdown {
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: #f7f7f4;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+  .bd-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .bd-row.bd-subtotal { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 6px; font-weight: 600; }
+  .bd-row.bd-total { border-top: 2px solid #333; margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 14px; }
+  .bd-row.muted-row { color: var(--muted); margin-top: 6px; font-size: 12px; }
+  .verdict {
+    margin-top: 16px;
+    padding: 14px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 6px;
+  }
+  .verdict.profit { background: #d1fae5; color: #065f46; }
+  .verdict.loss { background: #fee2e2; color: #991b1b; }
+  .verdict.neutral { background: #e5e7eb; color: #4b5563; }
 `;
 
 const CLIENT_JS = `
@@ -409,6 +515,131 @@ const CLIENT_JS = `
   }
   search.addEventListener('input', applyFilters);
   statusFilter.addEventListener('change', applyFilters);
+
+  // Stress test modal
+  const modal = document.getElementById('stress-modal');
+  const mTitle = document.getElementById('stress-title');
+  const mIncome = document.getElementById('stress-income');
+  const mAsking = document.getElementById('stress-asking');
+  const sLv = document.getElementById('stress-lv');
+  const sLr = document.getElementById('stress-lr');
+  const sLy = document.getElementById('stress-ly');
+  const sOcc = document.getElementById('stress-occ');
+  const sExp = document.getElementById('stress-exp');
+  const sMisc = document.getElementById('stress-misc');
+  const vLv = document.getElementById('stress-lv-v');
+  const vLr = document.getElementById('stress-lr-v');
+  const vLy = document.getElementById('stress-ly-v');
+  const vOcc = document.getElementById('stress-occ-v');
+  const vExp = document.getElementById('stress-exp-v');
+  const vMisc = document.getElementById('stress-misc-v');
+  const bdEff = document.getElementById('bd-eff');
+  const bdOp = document.getElementById('bd-op');
+  const bdNcf = document.getElementById('bd-ncf');
+  const bdMortgage = document.getElementById('bd-mortgage');
+  const bdMisc = document.getElementById('bd-misc');
+  const bdProfit = document.getElementById('bd-profit');
+  const bdDy = document.getElementById('bd-dy');
+  const verdict = document.getElementById('stress-verdict');
+
+  let stressIncome = 0;
+
+  function recomputeStress() {
+    const lv = parseFloat(sLv.value) || 0;
+    const lr = parseFloat(sLr.value) || 0;
+    const ly = parseFloat(sLy.value) || 0;
+    const occ = parseFloat(sOcc.value) || 0;
+    const exp = parseFloat(sExp.value) || 0;
+    const misc = parseFloat(sMisc.value) || 0;
+
+    vLv.textContent = yen(lv);
+    vLr.textContent = lr.toFixed(2) + '%';
+    vLy.textContent = ly + ' yrs';
+    vOcc.textContent = occ + '%';
+    vExp.textContent = exp + '%';
+    vMisc.textContent = yen(misc);
+
+    const effInc = stressIncome * (occ / 100);
+    const opEx = effInc * (exp / 100);
+    const ncf = effInc - opEx;
+    const mortgage = lv > 0 && ly > 0 ? calcMortgage(lv, lr, ly) : 0;
+    const profit = ncf - mortgage - misc;
+    const dy = lv > 0 ? (ncf / lv) * 100 : null;
+
+    bdEff.textContent = yen(effInc);
+    bdOp.textContent = '− ' + yen(opEx);
+    bdNcf.textContent = yen(ncf);
+    bdMortgage.textContent = '− ' + yen(mortgage);
+    bdMisc.textContent = '− ' + yen(misc);
+    bdProfit.textContent = yen(profit);
+    bdDy.textContent = dy == null ? '—' : dy.toFixed(1) + '%';
+
+    let rating = '';
+    if (lv > 0 && ly > 0) {
+      if (profit <= 0) rating = 'Pass 🔴';
+      else if (dy >= 8) rating = 'Strong Buy 🟢';
+      else if (dy >= 5) rating = 'Consider 🟡';
+      else rating = 'Weak debt yield';
+    }
+
+    verdict.className = 'verdict';
+    if (profit > 0) {
+      verdict.classList.add('profit');
+      verdict.textContent = '✅ Profitable: ' + yen(profit) + ' / year' + (rating ? ' · ' + rating : '');
+    } else if (profit < 0) {
+      verdict.classList.add('loss');
+      verdict.textContent = '❌ Losing money: ' + yen(profit) + ' / year' + (rating ? ' · ' + rating : '');
+    } else {
+      verdict.classList.add('neutral');
+      verdict.textContent = 'Break-even';
+    }
+  }
+
+  function openStress(row) {
+    const name = row.dataset.name || 'Property';
+    const income = parseFloat(row.dataset.income) || 0;
+    const asking = parseFloat(row.dataset.asking) || 0;
+    const inputs = row.querySelectorAll('.loan-input');
+    const selects = row.querySelectorAll('.loan-select');
+    const lv = parseFloat(inputs[0].value) || Math.round(asking * 0.8);
+    const lr = parseFloat(inputs[1].value) || 2.5;
+    const ly = parseFloat(inputs[2].value) || 25;
+    const exp = parseFloat(selects[0].value) || 20;
+    const occ = parseFloat(selects[1].value) || 100;
+
+    stressIncome = income;
+    mTitle.textContent = 'Stress Test: ' + name;
+    mIncome.textContent = yen(income);
+    mAsking.textContent = yen(asking);
+
+    // Set slider max for loan value based on asking (at least 200M floor)
+    sLv.max = Math.max(asking * 1.5, 200000000);
+    sLv.value = lv;
+    sLr.value = lr;
+    sLy.value = ly;
+    sOcc.value = occ;
+    sExp.value = exp;
+    sMisc.value = 0;
+
+    recomputeStress();
+    modal.classList.remove('hidden');
+  }
+
+  function closeStress() {
+    modal.classList.add('hidden');
+  }
+
+  document.querySelectorAll('.stress-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('tr');
+      openStress(row);
+    });
+  });
+
+  [sLv, sLr, sLy, sOcc, sExp, sMisc].forEach(s => s.addEventListener('input', recomputeStress));
+  document.querySelector('.modal-close').addEventListener('click', closeStress);
+  document.querySelector('.modal-backdrop').addEventListener('click', closeStress);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeStress(); });
 `;
 
 function renderPage(rows) {
@@ -476,6 +707,7 @@ function renderPage(rows) {
           <th>Loan ¥</th>
           <th>Rate %</th>
           <th>Years</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>${rowsHtml}</tbody>
@@ -483,6 +715,66 @@ function renderPage(rows) {
   </div>
 
   <footer>Last updated ${escapeHtml(now)} JST · <a href="https://www.notion.so/${DATABASE_ID.replace(/-/g, "")}" target="_blank">Edit in Notion →</a></footer>
+
+  <div id="stress-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="stress-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="stress-title">Stress Test</h2>
+        <button type="button" class="modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="stress-fixed">
+          <div><span class="muted">Annual Income</span><br/><strong id="stress-income">—</strong></div>
+          <div><span class="muted">Asking Price</span><br/><strong id="stress-asking">—</strong></div>
+        </div>
+
+        <div class="slider-row">
+          <label>Loan Value</label>
+          <input type="range" id="stress-lv" min="0" max="500000000" step="500000" />
+          <span class="slider-value" id="stress-lv-v">—</span>
+        </div>
+        <div class="slider-row">
+          <label>Interest Rate</label>
+          <input type="range" id="stress-lr" min="0" max="8" step="0.05" />
+          <span class="slider-value" id="stress-lr-v">—</span>
+        </div>
+        <div class="slider-row">
+          <label>Loan Years</label>
+          <input type="range" id="stress-ly" min="5" max="40" step="1" />
+          <span class="slider-value" id="stress-ly-v">—</span>
+        </div>
+        <div class="slider-row">
+          <label>Occupancy %</label>
+          <input type="range" id="stress-occ" min="0" max="100" step="5" />
+          <span class="slider-value" id="stress-occ-v">—</span>
+        </div>
+        <div class="slider-row">
+          <label>Expense Ratio %</label>
+          <input type="range" id="stress-exp" min="0" max="50" step="1" />
+          <span class="slider-value" id="stress-exp-v">—</span>
+        </div>
+        <div class="slider-row">
+          <label>Misc Annual Expenses</label>
+          <input type="range" id="stress-misc" min="0" max="10000000" step="10000" value="0" />
+          <span class="slider-value" id="stress-misc-v">¥0</span>
+        </div>
+
+        <div class="stress-breakdown">
+          <div class="bd-row"><span>Effective Income</span><span id="bd-eff">—</span></div>
+          <div class="bd-row"><span>− Operating Expenses</span><span id="bd-op">—</span></div>
+          <div class="bd-row bd-subtotal"><span>= NCF</span><span id="bd-ncf">—</span></div>
+          <div class="bd-row"><span>− Mortgage</span><span id="bd-mortgage">—</span></div>
+          <div class="bd-row"><span>− Misc Expenses</span><span id="bd-misc">—</span></div>
+          <div class="bd-row bd-total"><span>= Annual Profit</span><span id="bd-profit">—</span></div>
+          <div class="bd-row muted-row"><span>Debt Yield</span><span id="bd-dy">—</span></div>
+        </div>
+
+        <div id="stress-verdict" class="verdict">—</div>
+      </div>
+    </div>
+  </div>
+
   <script>${CLIENT_JS}</script>
 </body>
 </html>`;
