@@ -102,30 +102,34 @@ function rowFromPage(page) {
     structure: Array.isArray(struct) ? struct.join(", ") : struct,
     ratingNoLoan: readProp(page, "Rating (No Loan)"),
     ratingWithLoan: readProp(page, "Rating (w/ Loan)"),
+    loanValue: readProp(page, "Loan Value"),
+    loanRate: readProp(page, "Loan Interest Rate"),
+    loanYears: readProp(page, "Loan Years"),
   };
 }
 
 function renderRow(r) {
-  const profitClass =
-    r.profit != null && r.profit < 0 ? "num neg" : "num";
   const location = [r.prefecture, r.city].filter(Boolean).join(" / ");
   const rNoLoan = r.ratingNoLoan || "—";
-  const rWithLoan = r.ratingWithLoan || "—";
+  const attr = (v) => (v == null || v === "" ? "" : String(v));
   return `
-    <tr>
+    <tr data-page-id="${r.id}" data-ncf="${r.ncf ?? 0}">
       <td><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.name)}</a></td>
       <td class="num">${pct(r.grossYield)}</td>
       <td><span class="${ratingClass(rNoLoan)}">${escapeHtml(rNoLoan)}</span></td>
-      <td class="${profitClass}">${yen(r.profit)}</td>
-      <td><span class="${ratingClass(rWithLoan)}">${escapeHtml(rWithLoan)}</span></td>
+      <td class="num cell-profit"></td>
+      <td class="cell-rating-loan"></td>
       <td class="num">${yen(r.asking)}</td>
       <td class="num">${yen(r.income)}</td>
       <td class="num">${yen(r.ncf)}</td>
-      <td class="num">${yen(r.mortgage)}</td>
+      <td class="num cell-mortgage"></td>
       <td>${escapeHtml(location || "—")}</td>
       <td>${escapeHtml(r.structure || "—")}</td>
       <td>${r.yearBuilt ? escapeHtml(String(r.yearBuilt)) : "—"}${r.age ? ` <span class="muted">(${r.age}y)</span>` : ""}</td>
       <td><span class="pill ${statusClass(r.status)}">${escapeHtml(r.status || "—")}</span></td>
+      <td><input type="number" class="loan-input" data-field="loan_value" data-default="${attr(r.loanValue)}" value="${attr(r.loanValue)}" placeholder="—" step="100000" /></td>
+      <td><input type="number" class="loan-input" data-field="loan_rate" data-default="${attr(r.loanRate)}" value="${attr(r.loanRate)}" placeholder="—" step="0.01" /></td>
+      <td><input type="number" class="loan-input" data-field="loan_years" data-default="${attr(r.loanYears)}" value="${attr(r.loanYears)}" placeholder="—" step="1" /></td>
     </tr>
   `;
 }
@@ -201,11 +205,122 @@ const CSS = `
   .rating-green { color: #059669; font-weight: 600; }
   .rating-yellow { color: #b45309; font-weight: 600; }
   .rating-red { color: #dc2626; font-weight: 600; }
+  .loan-input {
+    width: 90px;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    background: white;
+    font-family: inherit;
+  }
+  .loan-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  .loan-input.override { background: #fef9c3; border-color: #facc15; }
+  .loan-input::-webkit-outer-spin-button,
+  .loan-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
 `;
 
 const CLIENT_JS = `
-  // Client-side sort and filter
+  const STATUS_COL = 12;
+
+  function yen(n) {
+    return n == null || isNaN(n) ? "—" : "¥" + Math.round(n).toLocaleString("en-US");
+  }
+
+  function ratingClass(r) {
+    if (!r) return "";
+    if (r.indexOf("🟢") === 0) return "rating-green";
+    if (r.indexOf("🟡") === 0) return "rating-yellow";
+    if (r.indexOf("🔴") === 0) return "rating-red";
+    return "";
+  }
+
+  function calcMortgage(principal, ratePercent, years) {
+    if (!principal || !years) return 0;
+    if (!ratePercent) return principal / years;
+    const r = ratePercent / 100 / 12;
+    const n = years * 12;
+    const monthly = principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    return monthly * 12;
+  }
+
+  function recomputeRow(row) {
+    const ncf = parseFloat(row.dataset.ncf) || 0;
+    const inputs = row.querySelectorAll('.loan-input');
+    const lv = parseFloat(inputs[0].value) || 0;
+    const lr = parseFloat(inputs[1].value) || 0;
+    const ly = parseFloat(inputs[2].value) || 0;
+
+    let mortgage = 0, profit = ncf, rating = "";
+    const hasLoan = lv > 0 && ly > 0;
+    if (hasLoan) {
+      mortgage = calcMortgage(lv, lr, ly);
+      profit = ncf - mortgage;
+      const debtYield = (ncf / lv) * 100;
+      if (profit <= 0) rating = "Pass 🔴";
+      else if (debtYield >= 8) rating = "Strong Buy 🟢";
+      else if (debtYield >= 5) rating = "Consider 🟡";
+    }
+
+    row.querySelector('.cell-mortgage').textContent = hasLoan ? yen(mortgage) : yen(0);
+    const profitCell = row.querySelector('.cell-profit');
+    profitCell.textContent = yen(profit);
+    profitCell.className = 'num cell-profit' + (profit < 0 ? ' neg' : '');
+    const ratingCell = row.querySelector('.cell-rating-loan');
+    if (rating) {
+      ratingCell.innerHTML = '<span class="' + ratingClass(rating) + '">' + rating + '</span>';
+    } else {
+      ratingCell.innerHTML = '<span>—</span>';
+    }
+  }
+
+  function updateInputStyle(input) {
+    const dflt = input.dataset.default || '';
+    const cur = input.value;
+    input.classList.toggle('override', cur !== dflt && cur !== '');
+  }
+
+  function loadLocalOverrides() {
+    document.querySelectorAll('tr[data-page-id]').forEach(row => {
+      const pageId = row.dataset.pageId;
+      let stored = {};
+      try { stored = JSON.parse(localStorage.getItem('loan_' + pageId) || '{}'); } catch (e) {}
+      row.querySelectorAll('.loan-input').forEach(input => {
+        const f = input.dataset.field;
+        if (stored[f] !== undefined && stored[f] !== '') {
+          input.value = stored[f];
+        }
+        updateInputStyle(input);
+      });
+    });
+  }
+
+  function saveOverride(pageId, field, value) {
+    const key = 'loan_' + pageId;
+    let stored = {};
+    try { stored = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+    if (value === '' || value == null) delete stored[field];
+    else stored[field] = value;
+    if (Object.keys(stored).length) localStorage.setItem(key, JSON.stringify(stored));
+    else localStorage.removeItem(key);
+  }
+
+  document.querySelectorAll('.loan-input').forEach(input => {
+    input.addEventListener('input', () => {
+      const row = input.closest('tr');
+      saveOverride(row.dataset.pageId, input.dataset.field, input.value);
+      updateInputStyle(input);
+      recomputeRow(row);
+    });
+  });
+
+  loadLocalOverrides();
+  document.querySelectorAll('tr[data-page-id]').forEach(recomputeRow);
+
+  // Sort and filter
   const table = document.querySelector('table');
   const tbody = table.querySelector('tbody');
   const headers = [...table.querySelectorAll('th')];
@@ -217,8 +332,8 @@ const CLIENT_JS = `
 
   function cellValue(row, idx) {
     const cell = row.children[idx];
-    const text = cell.textContent.trim();
-    // Try numeric parse for sortability
+    const input = cell.querySelector('input');
+    const text = input ? input.value : cell.textContent.trim();
     const num = parseFloat(text.replace(/[¥,%\\s]/g, ''));
     return Number.isNaN(num) ? text.toLowerCase() : num;
   }
@@ -248,7 +363,7 @@ const CLIENT_JS = `
     const st = statusFilter.value;
     [...tbody.querySelectorAll('tr')].forEach(row => {
       const text = row.textContent.toLowerCase();
-      const rowStatus = row.children[1].textContent.trim();
+      const rowStatus = row.children[STATUS_COL].textContent.trim();
       const matchQ = !q || text.includes(q);
       const matchS = !st || rowStatus === st;
       row.style.display = matchQ && matchS ? '' : 'none';
@@ -318,6 +433,9 @@ function renderPage(rows) {
           <th>Structure</th>
           <th>Year</th>
           <th>Status</th>
+          <th>Loan ¥</th>
+          <th>Rate %</th>
+          <th>Years</th>
         </tr>
       </thead>
       <tbody>${rowsHtml}</tbody>
