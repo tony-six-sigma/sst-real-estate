@@ -349,6 +349,7 @@ const CSS = `
   .verdict.profit { background: #d1fae5; color: #065f46; }
   .verdict.loss { background: #fee2e2; color: #991b1b; }
   .verdict.neutral { background: #e5e7eb; color: #4b5563; }
+  .stress-note { margin-top: 12px; font-size: 11px; color: var(--muted); line-height: 1.4; }
 `;
 
 const CLIENT_JS = `
@@ -543,6 +544,7 @@ const CLIENT_JS = `
   const verdict = document.getElementById('stress-verdict');
 
   let stressIncome = 0;
+  let stressRow = null;
 
   function recomputeStress() {
     const lv = parseFloat(sLv.value) || 0;
@@ -608,6 +610,7 @@ const CLIENT_JS = `
     const occ = parseFloat(selects[1].value) || 100;
 
     stressIncome = income;
+    stressRow = row;
     mTitle.textContent = 'Stress Test: ' + name;
     mIncome.textContent = yen(income);
     mAsking.textContent = yen(asking);
@@ -625,7 +628,38 @@ const CLIENT_JS = `
     modal.classList.remove('hidden');
   }
 
+  function writeBackToRow(row) {
+    if (!row) return;
+    const lv = Math.round(parseFloat(sLv.value) || 0);
+    const lr = parseFloat(sLr.value) || 0;
+    const ly = Math.round(parseFloat(sLy.value) || 0);
+    // Snap occupancy to nearest allowed dropdown value [70, 75, ..., 100]
+    const rawOcc = parseFloat(sOcc.value) || 100;
+    const occ = Math.max(70, Math.min(100, Math.round(rawOcc / 5) * 5));
+    // Snap expense to nearest allowed dropdown value [10..35]
+    const rawExp = parseFloat(sExp.value) || 20;
+    const exp = Math.max(10, Math.min(35, Math.round(rawExp)));
+
+    const fields = [
+      { selector: '[data-field="loan_value"]', value: lv > 0 ? String(lv) : '' },
+      { selector: '[data-field="loan_rate"]', value: lr > 0 ? String(lr) : '' },
+      { selector: '[data-field="loan_years"]', value: ly > 0 ? String(ly) : '' },
+      { selector: '[data-field="occupancy"]', value: String(occ) },
+      { selector: '[data-field="expense_ratio"]', value: String(exp) },
+    ];
+    fields.forEach(f => {
+      const el = row.querySelector(f.selector);
+      if (!el) return;
+      el.value = f.value;
+      saveOverride(row.dataset.pageId, el.dataset.field, f.value);
+      updateInputStyle(el);
+    });
+    recomputeRow(row);
+  }
+
   function closeStress() {
+    writeBackToRow(stressRow);
+    stressRow = null;
     modal.classList.add('hidden');
   }
 
@@ -771,6 +805,7 @@ function renderPage(rows) {
         </div>
 
         <div id="stress-verdict" class="verdict">—</div>
+        <div class="stress-note">Closing the modal applies these values to the row (except Misc Expenses, which has no row column). Expense & Occupancy snap to the nearest dropdown option.</div>
       </div>
     </div>
   </div>
