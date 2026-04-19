@@ -18,13 +18,15 @@ Vercel serverless function that reads the Notion **🏘️ Property Consideratio
 
 Five editable cells on the right of each row let you model deal scenarios without touching Notion:
 
-| Input | Type | Default |
-|---|---|---|
-| Expense % | Dropdown, 10–35% (1% steps) | Notion value, else 20% |
-| Occ % | Dropdown, 70/75/80/85/90/95/100 | 100% |
-| Loan ¥ | Number input | Notion value if set |
-| Rate % | Number input | Notion value if set |
-| Years | Number input | Notion value if set |
+| Input | Type | Range | Default |
+|---|---|---|---|
+| Expense % | Number input | 0–50, step 1 | Notion value, else 20% |
+| Occ % | Number input | 0–100, step 5 | 100% |
+| Loan ¥ | Number input | any | Notion value if set |
+| Rate % | Number input | any | Notion value if set |
+| Years | Number input | any | Notion value if set |
+
+Ranges on Expense and Occupancy match the Stress Test sliders exactly — no snap or clamp when the modal writes back.
 
 Changes cascade through the math instantly:
 ```
@@ -40,9 +42,11 @@ Overrides persist in `localStorage` per property. Yellow highlight indicates a u
 
 ### Stress Test modal
 
-Click the **Stress Test** button on any row to open a sliders-driven what-if calculator for that property. Sliders cover Loan Value, Interest Rate, Loan Years, Occupancy %, Expense Ratio %, and Misc Annual Expenses. Shows a real-time cash-flow breakdown plus a profit/loss verdict banner and w/Loan rating.
+Click the **Stress Test** button on any row to open a sliders-driven what-if calculator for that property. Sliders cover Loan Value, Interest Rate, Loan Years, Occupancy %, Expense Ratio %, and Misc Annual Expenses. Shows a real-time cash-flow breakdown (Effective Income → Operating Expenses → NCF → Mortgage → Misc → Profit), Debt Yield %, and a profit/loss verdict banner with w/Loan rating.
 
-Modal is a scratchpad — it prefills from the current row state but does not write back.
+**Close = apply.** Closing the modal (× button, backdrop click, or Escape) writes the current slider values back to the row's 5 inputs: Loan Value, Rate, Years, Occupancy, Expense. Downstream cells (NCF, Mortgage, Profit, Rating w/ Loan) recalculate and the changes persist to `localStorage`.
+
+Misc Annual Expenses is the one exception — it has no main-table column and exists only in the modal for stress scenarios.
 
 ## Rating logic
 
@@ -90,7 +94,7 @@ Opens at http://localhost:3000.
 
 - **Columns** — edit the `<thead>` in `renderPage()` and the cells in `renderRow()`. Keep column indices in sync (the `STATUS_COL` constant in `CLIENT_JS` is used by the status filter).
 - **Rating thresholds** — edit `recomputeRow()` in `CLIENT_JS` (and/or `ratingClass()` if you add new emoji-prefix conventions).
-- **Slider ranges** — edit the `<input type="range">` `min`/`max`/`step` attributes in the stress modal HTML, plus the `sLv.max` override in `openStress()`.
+- **Slider ranges** — edit the `<input type="range">` `min`/`max`/`step` attributes in the stress modal HTML, plus the `sLv.max` override in `openStress()`. To keep the modal's write-back lossless, the corresponding per-row `<input>` for Expense / Occupancy should match the slider range.
 - **Sort order** — edit the `rows.sort()` block in `handler()`.
 - **Caching** — `Cache-Control: s-maxage=60, stale-while-revalidate` on the response. Increase for fewer Notion API hits, decrease for fresher data.
 - **Styling** — all CSS is in the `CSS` constant.
@@ -101,6 +105,7 @@ Opens at http://localhost:3000.
 - **Column reordering requires updating `STATUS_COL` index** in `CLIENT_JS` so the status filter reads the right cell.
 - **localStorage keys** are `loan_<pageId>` — scoped per property, per browser. Not shared across team members.
 - **The modal is a singleton** — only one stress test is open at a time. Opening a second row's stress test replaces the first.
+- **Stress test has no discard path** — closing always writes back. If you want to explore scenarios without committing, note the current row values first (or use the browser's undo stack on each input).
 
 ## Deploy flow
 
