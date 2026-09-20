@@ -306,6 +306,14 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
         </div>
         <input type="range" id="s-capex" min="0" max="3000000" step="100000" value="500000">
       </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>GK Annual (税理士 + 均等割)</label>
+          <span class="slider-val" id="v-gk"></span>
+        </div>
+        <input type="range" id="s-gk" min="0" max="1000000" step="50000" value="450000">
+      </div>
     </div>
 
   </div>
@@ -395,6 +403,12 @@ const CLOSING_FIXED = {
   '火災保険 (5yr)': 700000,
   '不動産取得税': 4824545,
 };
+const GK_SETUP = {
+  'GK登録免許税': 60000,
+  'GK定款 (電子)': 0,
+  'GK司法書士': 100000,
+  'GK印鑑 + 雑費': 30000,
+};
 
 function yen(n) {
   if (n == null || isNaN(n)) return '--';
@@ -436,12 +450,13 @@ const sTerm = document.getElementById('s-term');
 const sOcc = document.getElementById('s-occ');
 const sExp = document.getElementById('s-exp');
 const sCapex = document.getElementById('s-capex');
+const sGk = document.getElementById('s-gk');
 
 const presets = {
-  'over':     { loan: 340000000, amort: 220000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
-  'full':     { loan: 310000000, amort: 190000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
-  'over-lite':{ loan: 327000000, amort: 210000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
-  'no-balloon':{ loan: 310000000, amort: 310000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
+  'over':     { loan: 340000000, amort: 220000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000, gk: 450000 },
+  'full':     { loan: 310000000, amort: 190000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000, gk: 450000 },
+  'over-lite':{ loan: 327000000, amort: 210000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000, gk: 450000 },
+  'no-balloon':{ loan: 310000000, amort: 310000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000, gk: 450000 },
 };
 
 let activePreset = null;
@@ -455,6 +470,7 @@ function applyPreset(key) {
   sOcc.value = p.occ;
   sExp.value = p.exp;
   sCapex.value = p.capex;
+  sGk.value = p.gk;
   activePreset = key;
   document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
   document.querySelector('.preset-btn[onclick*="' + key + '"]').classList.add('active');
@@ -474,6 +490,7 @@ function recompute() {
   const occ = parseFloat(sOcc.value);
   const exp = parseFloat(sExp.value);
   const capex = parseFloat(sCapex.value);
+  const gkAnnual = parseFloat(sGk.value);
 
   document.getElementById('v-loan').textContent = yen(totalLoan);
   document.getElementById('v-amort').textContent = yen(amortPortion);
@@ -483,6 +500,7 @@ function recompute() {
   document.getElementById('v-occ').textContent = pct(occ, 0);
   document.getElementById('v-exp').textContent = pct(exp, 0);
   document.getElementById('v-capex').textContent = yen(capex);
+  document.getElementById('v-gk').textContent = yen(gkAnnual);
 
   const effIncome = FULL_INCOME * (occ / 100);
   const opExpenses = effIncome * (exp / 100);
@@ -493,7 +511,7 @@ function recompute() {
   const monthlyTotal = monthlyAmort + monthlyIO;
   const annualDebt = monthlyTotal * 12;
 
-  const annualCashFlow = noi - annualDebt - capex;
+  const annualCashFlow = noi - annualDebt - capex - gkAnnual;
   const repaymentRatio = effIncome > 0 ? (annualDebt / effIncome) * 100 : 0;
   const netYield = ASKING > 0 ? (annualCashFlow / ASKING) * 100 : 0;
   const debtYield = totalLoan > 0 ? (noi / totalLoan) * 100 : 0;
@@ -504,9 +522,12 @@ function recompute() {
   const mortgageReg = totalLoan * 0.004;
   const savingsDeposit = totalLoan * 0.10;
 
+  let gkSetupTotal = 0;
+  for (const k in GK_SETUP) gkSetupTotal += GK_SETUP[k];
+
   let closingTotal = 0;
   for (const k in CLOSING_FIXED) closingTotal += CLOSING_FIXED[k];
-  closingTotal += mortgageReg + shusshikin + origFee;
+  closingTotal += mortgageReg + shusshikin + origFee + gkSetupTotal;
 
   const equityNeeded = Math.max(0, ASKING - totalLoan);
   const totalCashRequired = equityNeeded + closingTotal + savingsDeposit;
@@ -563,6 +584,7 @@ function recompute() {
     bdRow('NOI', yen(noi), 'bd-sub') +
     bdRow('Debt Service', '<span class="neg">- ' + yen(annualDebt) + '</span>') +
     bdRow('CapEx Reserve', '- ' + yen(capex)) +
+    bdRow('GK Costs (税理士 + 均等割)', '- ' + yen(gkAnnual)) +
     bdRow('Net Cash Flow', annualCashFlow >= 0
       ? '<span class="pos">' + yen(annualCashFlow) + '</span>'
       : '<span class="neg">' + yen(annualCashFlow) + '</span>', 'bd-total');
@@ -606,6 +628,10 @@ function recompute() {
   cashHtml += bdRow('  抵当権設定 (0.4%)', yen(mortgageReg));
   cashHtml += bdRow('  出資金 (2%)', yen(shusshikin));
   cashHtml += bdRow('  融資手数料 (1.5%+tax)', yen(origFee));
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;">GK Setup (合同会社):</div>';
+  for (const k in GK_SETUP) {
+    if (GK_SETUP[k] > 0) cashHtml += bdRow('  ' + k, yen(GK_SETUP[k]));
+  }
   cashHtml += bdRow('Closing Subtotal', yen(closingTotal), 'bd-sub');
   cashHtml += '<div style="font-size:11px;color:var(--muted);margin:8px 0 2px;">Deposits (recoverable):</div>';
   cashHtml += bdRow('  Savings Deposit (10%)', yen(savingsDeposit));
@@ -623,7 +649,7 @@ function recompute() {
     const mI = calcMonthlyIO(ioPortion, r);
     const mT = mA + mI;
     const aD = mT * 12;
-    const cf = noi - aD - capex;
+    const cf = noi - aD - capex - gkAnnual;
     const rr = effIncome > 0 ? (aD / effIncome * 100) : 0;
     const isCurrent = Math.abs(r - rate) < 0.05;
     const isDanger = cf < 0;
@@ -676,7 +702,7 @@ function bdRow(label, value, cls) {
     '<span>' + label + '</span><span>' + value + '</span></div>';
 }
 
-[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex].forEach(el => {
+[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk].forEach(el => {
   el.addEventListener('input', () => {
     activePreset = null;
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
