@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maison de Duke Scenario Modeler</title>
+<style>
+:root {
+  --bg: #fafaf7;
+  --fg: #1a1a1a;
+  --muted: #888;
+  --border: #e5e5e2;
+  --row-hover: #f3f3ef;
+  --accent: #2563eb;
+  --card-bg: white;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 14px;
+  padding: 16px;
+  line-height: 1.5;
+}
+h1 { font-size: 20px; margin-bottom: 2px; }
+.subtitle { color: var(--muted); font-size: 12px; margin-bottom: 16px; }
+
+.grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.card-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.field { margin-bottom: 10px; }
+.field-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 3px;
+}
+.field-value {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.slider-group { margin-bottom: 12px; }
+.slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+.slider-header label { color: #555; font-weight: 500; }
+.slider-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--accent);
+}
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.preset-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.preset-btn {
+  background: #f3f3ef;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 9px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.preset-btn:hover { background: #e8e8e3; }
+.preset-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.metric {
+  background: #f7f7f4;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.metric-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.metric-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+.metric.full { grid-column: 1 / -1; }
+.metric.green { background: #d1fae5; }
+.metric.green .metric-value { color: #065f46; }
+.metric.red { background: #fee2e2; }
+.metric.red .metric-value { color: #991b1b; }
+.metric.yellow { background: #fef3c7; }
+.metric.yellow .metric-value { color: #92400e; }
+
+.breakdown { margin-top: 12px; }
+.bd-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.bd-row.bd-sub { border-top: 1px solid var(--border); margin-top: 4px; padding-top: 6px; font-weight: 600; }
+.bd-row.bd-total { border-top: 2px solid #333; margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 14px; }
+.bd-row .neg { color: #dc2626; }
+.bd-row .pos { color: #059669; }
+
+.rate-table { margin-top: 12px; }
+.rate-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rate-table th, .rate-table td {
+  padding: 4px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.rate-table th { background: #f7f7f4; font-weight: 600; color: #555; font-size: 11px; text-transform: uppercase; }
+.rate-table td:first-child, .rate-table th:first-child { text-align: left; }
+.rate-table tr.current { background: #dbeafe; }
+.rate-table tr.danger td { color: #dc2626; font-weight: 600; }
+
+.verdict-bar {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+}
+.verdict-bar.profit { background: #d1fae5; color: #065f46; }
+.verdict-bar.loss { background: #fee2e2; color: #991b1b; }
+.verdict-bar.neutral { background: #e5e7eb; color: #4b5563; }
+
+.section-divider {
+  margin: 16px 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
+.balloon-viz {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f7f7f4;
+  border-radius: 6px;
+}
+.bar-container { display: flex; height: 24px; border-radius: 4px; overflow: hidden; margin: 8px 0; }
+.bar-amort { background: var(--accent); }
+.bar-io { background: #f59e0b; }
+.bar-legend { display: flex; gap: 16px; font-size: 11px; color: var(--muted); }
+.bar-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.bar-legend .leg-amort::before { background: var(--accent); }
+.bar-legend .leg-io::before { background: #f59e0b; }
+
+footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Maison de Duke - Scenario Modeler</h1>
+<div class="subtitle">メゾン・ド・デューク | 名古屋市中川区 | RC 54戸 | 1992年築 (34年) | Broker: Aoyama Capital (佐藤)</div>
+
+<div class="grid">
+  <!-- LEFT: Inputs -->
+  <div class="inputs-col">
+
+    <div class="card">
+      <div class="card-title">Property Fixed Data</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="field"><div class="field-label">Asking</div><div class="field-value">¥310,000,000</div></div>
+        <div class="field"><div class="field-label">Units</div><div class="field-value">54 (2 office + 52 1R)</div></div>
+        <div class="field"><div class="field-label">Current Income</div><div class="field-value">¥27,556,680/yr</div></div>
+        <div class="field"><div class="field-label">Full Income</div><div class="field-value">¥29,653,080/yr</div></div>
+        <div class="field"><div class="field-label">Current Expenses</div><div class="field-value">¥5,407,796/yr</div></div>
+        <div class="field"><div class="field-label">Gross Yield</div><div class="field-value">8.89% / 9.57% full</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Preset Scenarios</div>
+      <div class="preset-row">
+        <button class="preset-btn" onclick="applyPreset('over')">Over-Loan ¥340M</button>
+        <button class="preset-btn" onclick="applyPreset('full')">Full-Loan ¥310M</button>
+        <button class="preset-btn" onclick="applyPreset('over-lite')">Over-Loan Lite ¥327M</button>
+        <button class="preset-btn" onclick="applyPreset('no-balloon')">No Balloon ¥310M</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Loan Structure</div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Total Loan</label>
+          <span class="slider-val" id="v-loan"></span>
+        </div>
+        <input type="range" id="s-loan" min="250000000" max="350000000" step="1000000" value="310000000">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Amortizing Portion</label>
+          <span class="slider-val" id="v-amort"></span>
+        </div>
+        <input type="range" id="s-amort" min="0" max="350000000" step="1000000" value="190000000">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>IO (Balloon) Portion</label>
+          <span class="slider-val" id="v-io"></span>
+        </div>
+        <input type="range" id="s-io" min="0" max="200000000" step="1000000" value="120000000" disabled>
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Interest Rate</label>
+          <span class="slider-val" id="v-rate"></span>
+        </div>
+        <input type="range" id="s-rate" min="2.0" max="7.0" step="0.1" value="4.0">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Loan Term</label>
+          <span class="slider-val" id="v-term"></span>
+        </div>
+        <input type="range" id="s-term" min="15" max="30" step="1" value="25">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Operating Assumptions</div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Occupancy Rate</label>
+          <span class="slider-val" id="v-occ"></span>
+        </div>
+        <input type="range" id="s-occ" min="60" max="100" step="1" value="93">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Expense Ratio</label>
+          <span class="slider-val" id="v-exp"></span>
+        </div>
+        <input type="range" id="s-exp" min="15" max="40" step="1" value="20">
+      </div>
+
+      <div class="slider-group">
+        <div class="slider-header">
+          <label>Annual CapEx Reserve</label>
+          <span class="slider-val" id="v-capex"></span>
+        </div>
+        <input type="range" id="s-capex" min="0" max="3000000" step="100000" value="500000">
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: Results -->
+  <div class="results-col">
+
+    <div id="verdict" class="verdict-bar neutral">Adjust parameters to see results</div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="card-title">Key Metrics</div>
+      <div class="results-grid">
+        <div class="metric" id="m-cashflow">
+          <div class="metric-label">Annual Cash Flow</div>
+          <div class="metric-value" id="mv-cashflow">--</div>
+          <div class="metric-sub" id="ms-cashflow"></div>
+        </div>
+        <div class="metric" id="m-repay">
+          <div class="metric-label">Repayment Ratio 返済比率</div>
+          <div class="metric-value" id="mv-repay">--</div>
+          <div class="metric-sub">Target: under 50%</div>
+        </div>
+        <div class="metric" id="m-netyield">
+          <div class="metric-label">Net Yield (on price)</div>
+          <div class="metric-value" id="mv-netyield">--</div>
+          <div class="metric-sub" id="ms-netyield"></div>
+        </div>
+        <div class="metric" id="m-debtyield">
+          <div class="metric-label">Debt Yield</div>
+          <div class="metric-value" id="mv-debtyield">--</div>
+          <div class="metric-sub">Target: over 8%</div>
+        </div>
+        <div class="metric" id="m-coc">
+          <div class="metric-label">Cash-on-Cash Return</div>
+          <div class="metric-value" id="mv-coc">--</div>
+          <div class="metric-sub" id="ms-coc"></div>
+        </div>
+        <div class="metric" id="m-dscr">
+          <div class="metric-label">DSCR</div>
+          <div class="metric-value" id="mv-dscr">--</div>
+          <div class="metric-sub">Target: over 1.25x</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">P&L Breakdown (Annual)</div>
+      <div class="breakdown" id="pnl-breakdown"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Debt Service (Monthly)</div>
+      <div class="breakdown" id="debt-breakdown"></div>
+      <div class="balloon-viz" id="balloon-viz"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Total Cash Required at Closing</div>
+      <div class="breakdown" id="cash-breakdown"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Rate Sensitivity (Floating Rate Risk)</div>
+      <div class="rate-table" id="rate-table"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">25-Year Balloon Analysis</div>
+      <div class="breakdown" id="balloon-breakdown"></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>Maison de Duke Scenario Modeler | Data as of 2026-09-19 | Not financial advice</footer>
+
+<script>
+const ASKING = 310000000;
+const FULL_INCOME = 29653080;
+const CURRENT_INCOME = 27556680;
+
+const CLOSING_FIXED = {
+  '登録免許税': 3748560,
+  '司法書士手数料': 250000,
+  '印紙代': 130000,
+  '不動産担保手数料': 110000,
+  '火災保険 (5yr)': 700000,
+  '不動産取得税': 4824545,
+};
+
+function yen(n) {
+  if (n == null || isNaN(n)) return '--';
+  const neg = n < 0;
+  return (neg ? '-' : '') + '¥' + Math.abs(Math.round(n)).toLocaleString('en-US');
+}
+function pct(n, d) { return n == null || isNaN(n) ? '--' : n.toFixed(d !== undefined ? d : 1) + '%'; }
+
+function calcMonthlyAmort(principal, ratePercent, years) {
+  if (!principal || !years) return 0;
+  if (!ratePercent) return principal / (years * 12);
+  const r = ratePercent / 100 / 12;
+  const n = years * 12;
+  return principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+}
+
+function calcMonthlyIO(principal, ratePercent) {
+  if (!principal || !ratePercent) return 0;
+  return principal * (ratePercent / 100) / 12;
+}
+
+function remainingBalance(principal, ratePercent, years, monthsPaid) {
+  if (!principal || !years) return 0;
+  if (!ratePercent) {
+    const monthlyP = principal / (years * 12);
+    return Math.max(0, principal - monthlyP * monthsPaid);
+  }
+  const r = ratePercent / 100 / 12;
+  const n = years * 12;
+  const pmt = principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+  return principal * Math.pow(1 + r, monthsPaid) - pmt * (Math.pow(1 + r, monthsPaid) - 1) / r;
+}
+
+const sLoan = document.getElementById('s-loan');
+const sAmort = document.getElementById('s-amort');
+const sIo = document.getElementById('s-io');
+const sRate = document.getElementById('s-rate');
+const sTerm = document.getElementById('s-term');
+const sOcc = document.getElementById('s-occ');
+const sExp = document.getElementById('s-exp');
+const sCapex = document.getElementById('s-capex');
+
+const presets = {
+  'over':     { loan: 340000000, amort: 220000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
+  'full':     { loan: 310000000, amort: 190000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
+  'over-lite':{ loan: 327000000, amort: 210000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
+  'no-balloon':{ loan: 310000000, amort: 310000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000 },
+};
+
+let activePreset = null;
+
+function applyPreset(key) {
+  const p = presets[key];
+  sLoan.value = p.loan;
+  sAmort.value = p.amort; sAmort.max = p.loan;
+  sRate.value = p.rate;
+  sTerm.value = p.term;
+  sOcc.value = p.occ;
+  sExp.value = p.exp;
+  sCapex.value = p.capex;
+  activePreset = key;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.preset-btn[onclick*="' + key + '"]').classList.add('active');
+  recompute();
+}
+
+function recompute() {
+  const totalLoan = parseFloat(sLoan.value);
+  const amortPortion = Math.min(parseFloat(sAmort.value), totalLoan);
+  const ioPortion = totalLoan - amortPortion;
+  sAmort.max = totalLoan;
+  sIo.max = totalLoan;
+  sIo.value = ioPortion;
+
+  const rate = parseFloat(sRate.value);
+  const term = parseInt(sTerm.value);
+  const occ = parseFloat(sOcc.value);
+  const exp = parseFloat(sExp.value);
+  const capex = parseFloat(sCapex.value);
+
+  document.getElementById('v-loan').textContent = yen(totalLoan);
+  document.getElementById('v-amort').textContent = yen(amortPortion);
+  document.getElementById('v-io').textContent = yen(ioPortion);
+  document.getElementById('v-rate').textContent = pct(rate);
+  document.getElementById('v-term').textContent = term + ' years';
+  document.getElementById('v-occ').textContent = pct(occ, 0);
+  document.getElementById('v-exp').textContent = pct(exp, 0);
+  document.getElementById('v-capex').textContent = yen(capex);
+
+  const effIncome = FULL_INCOME * (occ / 100);
+  const opExpenses = effIncome * (exp / 100);
+  const noi = effIncome - opExpenses;
+
+  const monthlyAmort = calcMonthlyAmort(amortPortion, rate, term);
+  const monthlyIO = calcMonthlyIO(ioPortion, rate);
+  const monthlyTotal = monthlyAmort + monthlyIO;
+  const annualDebt = monthlyTotal * 12;
+
+  const annualCashFlow = noi - annualDebt - capex;
+  const repaymentRatio = effIncome > 0 ? (annualDebt / effIncome) * 100 : 0;
+  const netYield = ASKING > 0 ? (annualCashFlow / ASKING) * 100 : 0;
+  const debtYield = totalLoan > 0 ? (noi / totalLoan) * 100 : 0;
+  const dscr = annualDebt > 0 ? noi / annualDebt : 0;
+
+  const shusshikin = totalLoan * 0.02;
+  const origFee = totalLoan * 0.015 * 1.1;
+  const mortgageReg = totalLoan * 0.004;
+  const savingsDeposit = totalLoan * 0.10;
+
+  let closingTotal = 0;
+  for (const k in CLOSING_FIXED) closingTotal += CLOSING_FIXED[k];
+  closingTotal += mortgageReg + shusshikin + origFee;
+
+  const equityNeeded = Math.max(0, ASKING - totalLoan);
+  const totalCashRequired = equityNeeded + closingTotal + savingsDeposit;
+
+  const cocReturn = totalCashRequired > 0 ? (annualCashFlow / totalCashRequired) * 100 : 0;
+
+  // Verdict
+  const v = document.getElementById('verdict');
+  if (annualCashFlow > 500000) {
+    v.className = 'verdict-bar profit';
+    v.textContent = 'Profitable: ' + yen(annualCashFlow) + '/yr (' + yen(Math.round(annualCashFlow/12)) + '/mo)';
+  } else if (annualCashFlow > 0) {
+    v.className = 'verdict-bar yellow';
+    v.textContent = 'Marginal: ' + yen(annualCashFlow) + '/yr (' + yen(Math.round(annualCashFlow/12)) + '/mo)';
+  } else {
+    v.className = 'verdict-bar loss';
+    v.textContent = 'Negative: ' + yen(annualCashFlow) + '/yr (' + yen(Math.round(annualCashFlow/12)) + '/mo)';
+  }
+
+  // Key metrics
+  const mCf = document.getElementById('m-cashflow');
+  mCf.className = 'metric ' + (annualCashFlow > 500000 ? 'green' : annualCashFlow > 0 ? 'yellow' : 'red');
+  document.getElementById('mv-cashflow').textContent = yen(annualCashFlow);
+  document.getElementById('ms-cashflow').textContent = yen(Math.round(annualCashFlow / 12)) + '/mo';
+
+  const mR = document.getElementById('m-repay');
+  mR.className = 'metric ' + (repaymentRatio < 50 ? 'green' : repaymentRatio < 60 ? 'yellow' : 'red');
+  document.getElementById('mv-repay').textContent = pct(repaymentRatio);
+
+  const mNy = document.getElementById('m-netyield');
+  mNy.className = 'metric ' + (netYield > 2 ? 'green' : netYield > 0 ? 'yellow' : 'red');
+  document.getElementById('mv-netyield').textContent = pct(netYield);
+  document.getElementById('ms-netyield').textContent = 'NOI Yield: ' + pct(noi / ASKING * 100);
+
+  const mDy = document.getElementById('m-debtyield');
+  mDy.className = 'metric ' + (debtYield >= 8 ? 'green' : debtYield >= 5 ? 'yellow' : 'red');
+  document.getElementById('mv-debtyield').textContent = pct(debtYield);
+
+  const mCoc = document.getElementById('m-coc');
+  mCoc.className = 'metric ' + (cocReturn > 5 ? 'green' : cocReturn > 0 ? 'yellow' : 'red');
+  document.getElementById('mv-coc').textContent = pct(cocReturn);
+  document.getElementById('ms-coc').textContent = 'On ' + yen(totalCashRequired) + ' deployed';
+
+  const mDscr = document.getElementById('m-dscr');
+  mDscr.className = 'metric ' + (dscr >= 1.25 ? 'green' : dscr >= 1.0 ? 'yellow' : 'red');
+  document.getElementById('mv-dscr').textContent = dscr.toFixed(2) + 'x';
+
+  // P&L breakdown
+  document.getElementById('pnl-breakdown').innerHTML =
+    bdRow('Gross Income (full)', yen(FULL_INCOME)) +
+    bdRow('Occupancy Adj (' + pct(occ,0) + ')', '- ' + yen(FULL_INCOME - effIncome)) +
+    bdRow('Effective Income', yen(effIncome), 'bd-sub') +
+    bdRow('Operating Expenses (' + pct(exp,0) + ')', '- ' + yen(opExpenses)) +
+    bdRow('NOI', yen(noi), 'bd-sub') +
+    bdRow('Debt Service', '<span class="neg">- ' + yen(annualDebt) + '</span>') +
+    bdRow('CapEx Reserve', '- ' + yen(capex)) +
+    bdRow('Net Cash Flow', annualCashFlow >= 0
+      ? '<span class="pos">' + yen(annualCashFlow) + '</span>'
+      : '<span class="neg">' + yen(annualCashFlow) + '</span>', 'bd-total');
+
+  // Debt breakdown
+  document.getElementById('debt-breakdown').innerHTML =
+    bdRow('Amortizing (' + yen(amortPortion) + ')', yen(monthlyAmort) + '/mo') +
+    bdRow('Interest-Only (' + yen(ioPortion) + ')', yen(monthlyIO) + '/mo') +
+    bdRow('Total Monthly', yen(monthlyTotal) + '/mo', 'bd-sub') +
+    bdRow('Total Annual', yen(annualDebt) + '/yr', 'bd-sub');
+
+  // Balloon viz
+  const bviz = document.getElementById('balloon-viz');
+  if (ioPortion > 0) {
+    const amortPct = (amortPortion / totalLoan * 100).toFixed(0);
+    const ioPct = (ioPortion / totalLoan * 100).toFixed(0);
+    bviz.innerHTML =
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Loan Structure Split</div>' +
+      '<div class="bar-container">' +
+        '<div class="bar-amort" style="width:' + amortPct + '%"></div>' +
+        '<div class="bar-io" style="width:' + ioPct + '%"></div>' +
+      '</div>' +
+      '<div class="bar-legend">' +
+        '<span class="leg-amort">Amortizing ' + amortPct + '%</span>' +
+        '<span class="leg-io">Interest-Only ' + ioPct + '%</span>' +
+      '</div>';
+    bviz.style.display = '';
+  } else {
+    bviz.style.display = 'none';
+  }
+
+  // Cash required
+  let cashHtml = '';
+  if (equityNeeded > 0) {
+    cashHtml += bdRow('Down Payment (Price - Loan)', yen(equityNeeded));
+  }
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;">Closing Costs:</div>';
+  for (const k in CLOSING_FIXED) {
+    cashHtml += bdRow('  ' + k, yen(CLOSING_FIXED[k]));
+  }
+  cashHtml += bdRow('  抵当権設定 (0.4%)', yen(mortgageReg));
+  cashHtml += bdRow('  出資金 (2%)', yen(shusshikin));
+  cashHtml += bdRow('  融資手数料 (1.5%+tax)', yen(origFee));
+  cashHtml += bdRow('Closing Subtotal', yen(closingTotal), 'bd-sub');
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:8px 0 2px;">Deposits (recoverable):</div>';
+  cashHtml += bdRow('  Savings Deposit (10%)', yen(savingsDeposit));
+  cashHtml += bdRow('Total Cash Required', '<b>' + yen(totalCashRequired) + '</b>', 'bd-total');
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">';
+  cashHtml += '出資金 return: 3%/3yr, 2.5%/5yr, 2%/10yr dividend while held';
+  cashHtml += '</div>';
+  document.getElementById('cash-breakdown').innerHTML = cashHtml;
+
+  // Rate sensitivity
+  const rates = [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0];
+  let rateHtml = '<table><tr><th>Rate</th><th>Monthly</th><th>Annual Debt</th><th>Cash Flow</th><th>返済比率</th></tr>';
+  rates.forEach(r => {
+    const mA = calcMonthlyAmort(amortPortion, r, term);
+    const mI = calcMonthlyIO(ioPortion, r);
+    const mT = mA + mI;
+    const aD = mT * 12;
+    const cf = noi - aD - capex;
+    const rr = effIncome > 0 ? (aD / effIncome * 100) : 0;
+    const isCurrent = Math.abs(r - rate) < 0.05;
+    const isDanger = cf < 0;
+    rateHtml += '<tr class="' + (isCurrent ? 'current' : '') + (isDanger ? ' danger' : '') + '">' +
+      '<td style="text-align:left;">' + pct(r) + (isCurrent ? ' *' : '') + '</td>' +
+      '<td>' + yen(mT) + '</td>' +
+      '<td>' + yen(aD) + '</td>' +
+      '<td>' + yen(cf) + '</td>' +
+      '<td>' + pct(rr) + '</td>' +
+      '</tr>';
+  });
+  rateHtml += '</table>';
+  rateHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">* Current rate. Floating rate reviewed every 6 months. No cap.</div>';
+  document.getElementById('rate-table').innerHTML = rateHtml;
+
+  // Balloon analysis
+  let balloonHtml = '';
+  if (ioPortion > 0) {
+    const amortRemaining = Math.max(0, remainingBalance(amortPortion, rate, term, term * 12));
+    const totalBalloon = ioPortion + amortRemaining;
+    const cumulativeCashFlow = annualCashFlow * term;
+    const savingsFromDividend = shusshikin * 0.025 * term;
+    const netPosition = cumulativeCashFlow + savingsDeposit + savingsFromDividend - totalBalloon;
+
+    balloonHtml += bdRow('IO Principal (due at maturity)', yen(ioPortion));
+    balloonHtml += bdRow('Amortizing Remaining Balance', yen(amortRemaining));
+    balloonHtml += bdRow('Total Due at Year ' + term, yen(totalBalloon), 'bd-sub');
+    balloonHtml += '<div style="height:8px;"></div>';
+    balloonHtml += bdRow('Cumulative Cash Flow (' + term + 'yr)', yen(cumulativeCashFlow));
+    balloonHtml += bdRow('Savings Deposit (recovered)', yen(savingsDeposit));
+    balloonHtml += bdRow('Est. 出資金 Dividends', yen(savingsFromDividend));
+    balloonHtml += bdRow('Net Position at Maturity',
+      (netPosition >= 0 ? '<span class="pos">' : '<span class="neg">') + yen(netPosition) + '</span>', 'bd-total');
+    balloonHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">';
+    if (netPosition < 0) {
+      balloonHtml += 'Shortfall of ' + yen(Math.abs(netPosition)) + ' must be covered by: refinancing, sale proceeds, or savings. ';
+      balloonHtml += 'Property would need to sell for at least ' + yen(totalBalloon) + ' to break even on the balloon.';
+    } else {
+      balloonHtml += 'Cumulative cash flow covers the balloon with ' + yen(netPosition) + ' surplus.';
+    }
+    balloonHtml += '</div>';
+  } else {
+    balloonHtml += '<div style="color:var(--muted);font-size:13px;">No balloon. Loan fully amortizes over ' + term + ' years.</div>';
+  }
+  document.getElementById('balloon-breakdown').innerHTML = balloonHtml;
+}
+
+function bdRow(label, value, cls) {
+  return '<div class="bd-row' + (cls ? ' ' + cls : '') + '">' +
+    '<span>' + label + '</span><span>' + value + '</span></div>';
+}
+
+[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex].forEach(el => {
+  el.addEventListener('input', () => {
+    activePreset = null;
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    recompute();
+  });
+});
+
+applyPreset('full');
+</script>
+
+</body>
+</html>
