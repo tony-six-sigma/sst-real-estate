@@ -460,6 +460,11 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
       <div class="breakdown" id="exit-detail" style="margin-top:12px;"></div>
     </div>
 
+    <div class="card">
+      <div class="card-title">Total Loan Cost</div>
+      <div class="breakdown" id="loan-cost-breakdown"></div>
+    </div>
+
   </div>
 </div>
 
@@ -998,6 +1003,47 @@ function recompute() {
   detailHtml += bdRow('Building Age at Year 25', (BLDG_AGE + 25) + ' years');
   detailHtml += bdRow('Demolition Cost (est.)', yen(demoCost));
   document.getElementById('exit-detail').innerHTML = detailHtml;
+
+  // Total Loan Cost
+  let totalPaidAmort = 0;
+  let totalInterestAmort = 0;
+  if (amortPortion > 0 && term > 0) {
+    totalPaidAmort = monthlyAmort * term * 12;
+    totalInterestAmort = totalPaidAmort - amortPortion;
+  }
+  const totalPaidIO = monthlyIO * term * 12;
+  const totalPaidAll = totalPaidAmort + totalPaidIO;
+  const totalInterestAll = totalInterestAmort + totalPaidIO;
+  const balloonDue = ioPortion;
+
+  let lcHtml = '';
+  lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Amortizing Portion (' + yen(amortPortion) + ')</div>';
+  lcHtml += bdRow('Monthly Payment', yen(monthlyAmort) + '/mo');
+  lcHtml += bdRow('Annual Payment', yen(monthlyAmort * 12) + '/yr');
+  lcHtml += bdRow('Total Paid (' + term + ' years)', yen(totalPaidAmort));
+  lcHtml += bdRow('Principal Repaid', yen(amortPortion));
+  lcHtml += bdRow('Interest Paid', '<span class="neg">' + yen(totalInterestAmort) + '</span>');
+  if (ioPortion > 0) {
+    lcHtml += '<div style="height:10px;"></div>';
+    lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">IO Balloon Portion (' + yen(ioPortion) + ')</div>';
+    lcHtml += bdRow('Monthly Interest', yen(monthlyIO) + '/mo');
+    lcHtml += bdRow('Annual Interest', yen(monthlyIO * 12) + '/yr');
+    lcHtml += bdRow('Total Interest Paid (' + term + ' years)', '<span class="neg">' + yen(totalPaidIO) + '</span>');
+    lcHtml += bdRow('Balloon Due at Year ' + term, '<span class="neg">' + yen(balloonDue) + '</span>');
+  }
+  lcHtml += '<div style="height:10px;"></div>';
+  lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Combined Total</div>';
+  lcHtml += bdRow('Total Payments (' + term + ' years)', yen(totalPaidAll));
+  lcHtml += bdRow('Total Interest Paid', '<span class="neg">' + yen(totalInterestAll) + '</span>');
+  if (ioPortion > 0) {
+    lcHtml += bdRow('Balloon Principal Due', '<span class="neg">' + yen(balloonDue) + '</span>');
+    lcHtml += bdRow('Total Cost of Loan (interest + balloon)', '<span class="neg">' + yen(totalInterestAll + balloonDue) + '</span>', 'bd-total');
+  } else {
+    lcHtml += bdRow('Total Cost of Loan (interest only)', '<span class="neg">' + yen(totalInterestAll) + '</span>', 'bd-total');
+  }
+  lcHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">You borrow ' + yen(totalLoan) + ' and pay back ' + yen(totalPaidAll + balloonDue) + ' total. Interest cost: ' + pct(totalInterestAll / totalLoan * 100) + ' of principal.</div>';
+
+  document.getElementById('loan-cost-breakdown').innerHTML = lcHtml;
 }
 
 function bdRow(label, value, cls) {
