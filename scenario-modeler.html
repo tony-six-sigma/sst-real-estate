@@ -1033,15 +1033,15 @@ function recompute() {
   }
   lcHtml += '<div style="height:10px;"></div>';
   lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Combined Total</div>';
+  const grandTotal = totalPaidAll + balloonDue;
+  const equivRate = (Math.pow(grandTotal / totalLoan, 1 / term) - 1) * 100;
   lcHtml += bdRow('Total Payments (' + term + ' years)', yen(totalPaidAll));
   lcHtml += bdRow('Total Interest Paid', '<span class="neg">' + yen(totalInterestAll) + '</span>');
   if (ioPortion > 0) {
     lcHtml += bdRow('Balloon Principal Due', '<span class="neg">' + yen(balloonDue) + '</span>');
-    lcHtml += bdRow('Total Cost of Loan (interest + balloon)', '<span class="neg">' + yen(totalInterestAll + balloonDue) + '</span>', 'bd-total');
-  } else {
-    lcHtml += bdRow('Total Cost of Loan (interest only)', '<span class="neg">' + yen(totalInterestAll) + '</span>', 'bd-total');
   }
-  lcHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">You borrow ' + yen(totalLoan) + ' and pay back ' + yen(totalPaidAll + balloonDue) + ' total. Interest cost: ' + pct(totalInterestAll / totalLoan * 100) + ' of principal.</div>';
+  lcHtml += bdRow('Total Paid (payments + balloon)', '<span class="neg">' + yen(grandTotal) + '</span>', 'bd-total');
+  lcHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">You borrow ' + yen(totalLoan) + ' and pay back ' + yen(grandTotal) + ' total. Equivalent compound rate: ' + pct(equivRate) + '/yr.</div>';
 
   document.getElementById('loan-cost-breakdown').innerHTML = lcHtml;
 }
