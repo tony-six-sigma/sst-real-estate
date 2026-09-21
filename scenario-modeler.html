@@ -386,6 +386,28 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
     </div>
 
     <div class="card">
+      <div class="card-title">Tax & Depreciation (GK)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Effective Tax Rate</label>
+            <span class="slider-val" id="v-taxrate"></span>
+          </div>
+          <input type="range" id="s-taxrate" min="20" max="40" step="1" value="33">
+        </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Building Ratio of Price</label>
+            <span class="slider-val" id="v-bldgratio"></span>
+          </div>
+          <input type="range" id="s-bldgratio" min="40" max="90" step="5" value="68">
+        </div>
+      </div>
+      <div class="breakdown" id="tax-breakdown"></div>
+      <div class="rate-table" id="tax-yearly" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card">
       <div class="card-title">Exit Scenario Analysis</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
         <div class="slider-group" style="margin-bottom:0;">
@@ -418,7 +440,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
         </div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
-        Building: RC 1992 (34yr old), 47yr tax life, 13yr remaining. Land: 所有権 (freehold, included).
+        Building: RC 1992 (34yr old), 47yr statutory life, 19yr 中古 depreciation period. Land: 所有権 (freehold, included).
       </div>
       <div class="rate-table" id="exit-table"></div>
       <div class="breakdown" id="exit-detail" style="margin-top:12px;"></div>
@@ -490,6 +512,8 @@ const sOcc = document.getElementById('s-occ');
 const sExp = document.getElementById('s-exp');
 const sCapex = document.getElementById('s-capex');
 const sGk = document.getElementById('s-gk');
+const sTaxRate = document.getElementById('s-taxrate');
+const sBldgRatio = document.getElementById('s-bldgratio');
 const sLand = document.getElementById('s-land');
 const sLandGrow = document.getElementById('s-landgrow');
 const sBldg = document.getElementById('s-bldg');
@@ -739,6 +763,131 @@ function recompute() {
   }
   document.getElementById('balloon-breakdown').innerHTML = balloonHtml;
 
+  // Tax & Depreciation
+  const taxRatePct = parseFloat(sTaxRate.value);
+  const bldgRatioPct = parseFloat(sBldgRatio.value);
+  document.getElementById('v-taxrate').textContent = pct(taxRatePct, 0);
+  document.getElementById('v-bldgratio').textContent = pct(bldgRatioPct, 0);
+
+  const RC_STATUTORY = 47;
+  const BLDG_AGE = 34;
+  const depreciableLife = Math.floor((RC_STATUTORY - BLDG_AGE) + BLDG_AGE * 0.2);
+  const depreciableBasis = ASKING * (bldgRatioPct / 100);
+  const annualDepreciation = depreciableBasis / depreciableLife;
+  const depRate = (1 / depreciableLife);
+
+  function yearInterest(yr) {
+    let totalInt = 0;
+    for (let m = 0; m < 12; m++) {
+      const monthNum = (yr - 1) * 12 + m;
+      if (amortPortion > 0 && rate > 0) {
+        const bal = remainingBalance(amortPortion, rate, term, monthNum);
+        totalInt += bal * (rate / 100 / 12);
+      }
+      if (ioPortion > 0 && rate > 0) {
+        totalInt += ioPortion * (rate / 100 / 12);
+      }
+    }
+    return totalInt;
+  }
+
+  const yr1Interest = yearInterest(1);
+  const yr1Principal = annualDebt - yr1Interest;
+  const yr1TaxableIncome = effIncome - opExpenses - yr1Interest - annualDepreciation - gkAnnual;
+  const yr1Tax = Math.max(0, yr1TaxableIncome * (taxRatePct / 100));
+  const yr1MinTax = 70000;
+  const yr1TotalTax = Math.max(yr1Tax, yr1MinTax);
+  const yr1AfterTaxCF = annualCashFlow - yr1TotalTax;
+
+  let taxHtml = '';
+  taxHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Year 1 Tax Position</div>';
+  taxHtml += bdRow('Depreciable Basis (building ' + pct(bldgRatioPct,0) + ' of price)', yen(depreciableBasis));
+  taxHtml += bdRow('中古 Depreciation Period', depreciableLife + ' years (定額法 ' + pct(depRate * 100) + '/yr)');
+  taxHtml += bdRow('Annual Depreciation', '<b>' + yen(annualDepreciation) + '</b>');
+  taxHtml += '<div style="height:8px;"></div>';
+  taxHtml += bdRow('Effective Rental Income', yen(effIncome));
+  taxHtml += bdRow('Operating Expenses', '- ' + yen(opExpenses));
+  taxHtml += bdRow('Interest Expense (deductible)', '- ' + yen(yr1Interest));
+  taxHtml += bdRow('Depreciation (non-cash)', '- ' + yen(annualDepreciation));
+  taxHtml += bdRow('GK Costs', '- ' + yen(gkAnnual));
+  taxHtml += bdRow('Taxable Income', yr1TaxableIncome >= 0
+    ? yen(yr1TaxableIncome)
+    : '<span class="pos">' + yen(yr1TaxableIncome) + ' (loss)</span>', 'bd-sub');
+
+  if (yr1TaxableIncome < 0) {
+    taxHtml += '<div style="font-size:11px;color:#059669;margin:6px 0;">Paper loss of ' + yen(Math.abs(yr1TaxableIncome)) + '/yr. Cash-flow positive but tax-negative. Loss carries forward up to 10 years (GK).</div>';
+    taxHtml += bdRow('Tax Owed (均等割 minimum only)', yen(yr1MinTax));
+  } else {
+    taxHtml += bdRow('Tax @ ' + pct(taxRatePct,0), yen(yr1Tax));
+    if (yr1Tax < yr1MinTax) {
+      taxHtml += bdRow('均等割 minimum', yen(yr1MinTax));
+    }
+    taxHtml += bdRow('Total Tax', yen(yr1TotalTax), 'bd-sub');
+  }
+  taxHtml += '<div style="height:8px;"></div>';
+  taxHtml += bdRow('Pre-Tax Cash Flow', yen(annualCashFlow));
+  taxHtml += bdRow('Tax', '- ' + yen(yr1TotalTax));
+  taxHtml += bdRow('After-Tax Cash Flow', yr1AfterTaxCF >= 0
+    ? '<span class="pos">' + yen(yr1AfterTaxCF) + '</span>'
+    : '<span class="neg">' + yen(yr1AfterTaxCF) + '</span>', 'bd-total');
+  taxHtml += '<div style="height:6px;"></div>';
+  taxHtml += bdRow('Principal Repayment (not deductible)', yen(yr1Principal));
+  taxHtml += bdRow('Of which: equity building', yen(yr1Principal));
+
+  document.getElementById('tax-breakdown').innerHTML = taxHtml;
+
+  // Tax yearly table with proper 10-year loss carryforward
+  const lossPool = [];
+  const showYears = [1,2,3,5,7,10,13,15,19,20,22,25];
+  let taxYrHtml = '<table><tr><th>Year</th><th>Interest</th><th>Deprec.</th><th>Taxable</th><th>Tax</th><th>After-Tax CF</th></tr>';
+
+  for (let yr = 1; yr <= Math.min(term, 25); yr++) {
+    const yrInt = yearInterest(yr);
+    const yrDep = yr <= depreciableLife ? annualDepreciation : 0;
+    let rawTaxable = effIncome - opExpenses - yrInt - yrDep - gkAnnual;
+
+    // Expire losses older than 10 years
+    while (lossPool.length > 0 && lossPool[0].year <= yr - 10) lossPool.shift();
+
+    let yrTaxable, yrTax, hasLoss = false;
+    if (rawTaxable < 0) {
+      lossPool.push({ year: yr, amount: Math.abs(rawTaxable) });
+      yrTaxable = 0;
+      yrTax = yr1MinTax;
+      hasLoss = true;
+    } else {
+      let remaining = rawTaxable;
+      while (remaining > 0 && lossPool.length > 0) {
+        const oldest = lossPool[0];
+        if (oldest.amount <= remaining) {
+          remaining -= oldest.amount;
+          lossPool.shift();
+        } else {
+          oldest.amount -= remaining;
+          remaining = 0;
+        }
+      }
+      yrTaxable = remaining;
+      yrTax = Math.max(yrTaxable * (taxRatePct / 100), yr1MinTax);
+    }
+    const yrATCF = annualCashFlow - yrTax;
+    const poolTotal = lossPool.reduce((s, l) => s + l.amount, 0);
+
+    if (!showYears.includes(yr)) continue;
+    const isDep = yr <= depreciableLife;
+    taxYrHtml += '<tr' + (yr === 1 || yr === depreciableLife || yr === depreciableLife + 1 ? ' style="font-weight:600;"' : '') + '>' +
+      '<td style="text-align:left;">Yr ' + yr + (yr === depreciableLife ? ' *' : '') + '</td>' +
+      '<td>' + yen(yrInt) + '</td>' +
+      '<td>' + (isDep ? yen(yrDep) : '<span style="color:var(--muted);">ended</span>') + '</td>' +
+      '<td>' + (hasLoss ? '<span class="pos">loss (' + yen(poolTotal) + ' pool)</span>' : yen(yrTaxable)) + '</td>' +
+      '<td>' + yen(yrTax) + '</td>' +
+      '<td style="color:' + (yrATCF >= 0 ? '#059669' : '#dc2626') + ';">' + yen(yrATCF) + '</td>' +
+      '</tr>';
+  }
+  taxYrHtml += '</table>';
+  taxYrHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">* Depreciation ends at year ' + depreciableLife + '. Losses carry forward 10yr (GK/法人 繰越欠損金). 均等割 ¥70K/yr minimum even in loss years.</div>';
+  document.getElementById('tax-yearly').innerHTML = taxYrHtml;
+
   // Exit scenario analysis
   const landVal = parseFloat(sLand.value);
   const landGrowPct = parseFloat(sLandGrow.value);
@@ -750,9 +899,7 @@ function recompute() {
   document.getElementById('v-bldg').textContent = yen(bldgVal);
   document.getElementById('v-exitcap').textContent = pct(exitCapRate);
 
-  const RC_LIFE = 47;
-  const BUILDING_AGE = 34;
-  const remainingLife = Math.max(0, RC_LIFE - BUILDING_AGE);
+  const remainingLife = depreciableLife;
 
   const exitYears = [3, 5, 7, 10, 15, 20, 25];
   let exitHtml = '<table><tr><th>Exit Yr</th><th>Est. Sale</th><th>Loan Bal.</th><th>Cum. CF</th><th>Net Profit</th><th>Total ROI</th><th>Ann. IRR</th></tr>';
@@ -810,8 +957,8 @@ function recompute() {
   detailHtml += bdRow('Land at Year 25', yen(yr25Land));
   detailHtml += '<div style="height:6px;"></div>';
   detailHtml += bdRow('Building Today (est.)', yen(bldgVal));
-  detailHtml += bdRow('Building at Year 5 (13yr rem. tax life)', yen(yr5Bldg));
-  detailHtml += bdRow('Building at Year 13+ (tax book value)', yen(0));
+  detailHtml += bdRow('Building at Year 5 (' + depreciableLife + 'yr depr. period)', yen(yr5Bldg));
+  detailHtml += bdRow('Building at Year ' + depreciableLife + '+ (book value)', yen(0));
   detailHtml += '<div style="height:6px;"></div>';
   detailHtml += bdRow('Total Asset Today', yen(landVal + bldgVal), 'bd-sub');
   detailHtml += bdRow('Total Asset at Year 5', yen(yr5Land + yr5Bldg), 'bd-sub');
@@ -824,7 +971,7 @@ function bdRow(label, value, cls) {
     '<span>' + label + '</span><span>' + value + '</span></div>';
 }
 
-[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk, sLand, sLandGrow, sBldg, sExitCap].forEach(el => {
+[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk, sTaxRate, sBldgRatio, sLand, sLandGrow, sBldg, sExitCap].forEach(el => {
   el.addEventListener('input', () => {
     activePreset = null;
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
