@@ -433,14 +433,28 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Cap Rate at Sale</label>
+            <label>Exit Cap Rate (today)</label>
             <span class="slider-val" id="v-exitcap"></span>
           </div>
           <input type="range" id="s-exitcap" min="6" max="15" step="0.5" value="10">
         </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Cap Rate Drift /yr</label>
+            <span class="slider-val" id="v-capdrift"></span>
+          </div>
+          <input type="range" id="s-capdrift" min="0" max="0.5" step="0.05" value="0.15">
+        </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Demolition Reserve (yr 20+)</label>
+            <span class="slider-val" id="v-demo"></span>
+          </div>
+          <input type="range" id="s-demo" min="0" max="50000000" step="5000000" value="25000000">
+        </div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
-        Building: RC 1992 (34yr old), 47yr statutory life, 19yr 中古 depreciation period. Land: 所有権 (freehold, included).
+        Building: RC 1992 (34yr old), 47yr statutory life, 19yr 中古 depreciation period. Land: 所有権 (freehold). Cap rate rises with age (financing harder, less buyer depreciation benefit). Demolition reserve deducted from year 20+ exit value.
       </div>
       <div class="rate-table" id="exit-table"></div>
       <div class="breakdown" id="exit-detail" style="margin-top:12px;"></div>
@@ -518,6 +532,8 @@ const sLand = document.getElementById('s-land');
 const sLandGrow = document.getElementById('s-landgrow');
 const sBldg = document.getElementById('s-bldg');
 const sExitCap = document.getElementById('s-exitcap');
+const sCapDrift = document.getElementById('s-capdrift');
+const sDemo = document.getElementById('s-demo');
 
 const presets = {
   'over':     { loan: 340000000, amort: 220000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000, gk: 450000 },
@@ -894,26 +910,36 @@ function recompute() {
   const bldgVal = parseFloat(sBldg.value);
   const exitCapRate = parseFloat(sExitCap.value);
 
+  const capDrift = parseFloat(sCapDrift.value);
+  const demoCost = parseFloat(sDemo.value);
+
   document.getElementById('v-land').textContent = yen(landVal);
   document.getElementById('v-landgrow').textContent = pct(landGrowPct);
   document.getElementById('v-bldg').textContent = yen(bldgVal);
   document.getElementById('v-exitcap').textContent = pct(exitCapRate);
+  document.getElementById('v-capdrift').textContent = '+' + capDrift.toFixed(2) + '%/yr';
+  document.getElementById('v-demo').textContent = yen(demoCost);
 
   const remainingLife = depreciableLife;
 
-  const exitYears = [3, 5, 7, 10, 15, 20, 25];
-  let exitHtml = '<table><tr><th>Exit Yr</th><th>Est. Sale</th><th>Loan Bal.</th><th>Cum. CF</th><th>Net Profit</th><th>Total ROI</th><th>Ann. IRR</th></tr>';
+  const exitYears = [3, 5, 7, 10, 15, 19, 20, 25];
+  let exitHtml = '<table><tr><th>Exit Yr</th><th>Bldg Age</th><th>Cap Rate</th><th>Est. Sale</th><th>Loan Bal.</th><th>Cum. CF</th><th>Net Profit</th><th>Ann. IRR</th></tr>';
 
   exitYears.forEach(yr => {
     if (yr > term) return;
 
-    const bldgRemLife = Math.max(0, remainingLife - yr);
-    const bldgDepreciated = remainingLife > 0 ? bldgVal * (bldgRemLife / remainingLife) : 0;
+    const bldgAge = BLDG_AGE + yr;
     const landAtExit = landVal * Math.pow(1 + landGrowPct / 100, yr);
 
-    const noiAtExit = noi;
-    const capRateSale = noiAtExit / (exitCapRate / 100);
-    const assetSale = Math.max(landAtExit + bldgDepreciated, capRateSale);
+    // Cap rate increases with age (harder to finance, less depreciation for buyer)
+    const yrCapRate = exitCapRate + (capDrift * yr);
+    const capRateSale = noi / (yrCapRate / 100);
+
+    // Demolition reserve for very old buildings (yr 20+)
+    const yrDemo = yr >= 20 ? demoCost : (yr >= 15 ? demoCost * 0.5 : 0);
+
+    // Asset value = higher of (cap rate valuation) or (land only), minus demolition
+    const assetSale = Math.max(capRateSale, landAtExit) - yrDemo;
 
     const amortBal = amortPortion > 0 ? Math.max(0, remainingBalance(amortPortion, rate, term, yr * 12)) : 0;
     const totalLoanBal = amortBal + ioPortion;
@@ -921,7 +947,6 @@ function recompute() {
     const cumCF = annualCashFlow * yr;
     const saleProceeds = assetSale - totalLoanBal;
     const netProfit = saleProceeds + cumCF - totalCashRequired;
-    const totalROI = totalCashRequired > 0 ? (netProfit / totalCashRequired) * 100 : 0;
 
     const totalReturn = totalCashRequired + netProfit;
     let annIRR = 0;
@@ -932,37 +957,41 @@ function recompute() {
     }
 
     const isProfit = netProfit > 0;
-    exitHtml += '<tr' + (yr === 5 || yr === 25 ? ' style="font-weight:600;"' : '') + '>' +
+    const highlight = yr === 19 || yr === 25;
+    exitHtml += '<tr' + (highlight ? ' style="font-weight:600;"' : '') + '>' +
       '<td style="text-align:left;">Year ' + yr + '</td>' +
+      '<td>' + bldgAge + 'yr</td>' +
+      '<td>' + pct(yrCapRate) + '</td>' +
       '<td>' + yen(assetSale) + '</td>' +
       '<td>' + yen(totalLoanBal) + '</td>' +
       '<td>' + yen(cumCF) + '</td>' +
       '<td style="color:' + (isProfit ? '#059669' : '#dc2626') + ';">' + yen(netProfit) + '</td>' +
-      '<td>' + pct(totalROI) + '</td>' +
-      '<td>' + pct(annIRR) + '</td>' +
+      '<td>' + (annIRR <= -100 ? 'n/a' : pct(annIRR)) + '</td>' +
       '</tr>';
   });
   exitHtml += '</table>';
-  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Est. Sale = higher of (land + depreciated building) or (NOI / cap rate). Sale costs (仲介手数料 3%+tax, taxes) not deducted.</div>';
+  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap rate rises ' + capDrift.toFixed(2) + '%/yr (aging building = harder financing + less depreciation for buyer). Demolition reserve 50% at yr 15, 100% at yr 20+. Sale costs (仲介手数料 3%+tax) not deducted.</div>';
   document.getElementById('exit-table').innerHTML = exitHtml;
 
   const yr5Land = landVal * Math.pow(1 + landGrowPct / 100, 5);
-  const yr5BldgRem = Math.max(0, remainingLife - 5);
-  const yr5Bldg = remainingLife > 0 ? bldgVal * (yr5BldgRem / remainingLife) : 0;
+  const yr19Land = landVal * Math.pow(1 + landGrowPct / 100, 19);
   const yr25Land = landVal * Math.pow(1 + landGrowPct / 100, 25);
+  const yr5Cap = exitCapRate + capDrift * 5;
+  const yr19Cap = exitCapRate + capDrift * 19;
+  const yr25Cap = exitCapRate + capDrift * 25;
 
   let detailHtml = '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Value Trajectory</div>';
   detailHtml += bdRow('Land Today (est.)', yen(landVal));
-  detailHtml += bdRow('Land at Year 5 (' + pct(landGrowPct) + '/yr)', yen(yr5Land));
+  detailHtml += bdRow('Land at Year 19 (' + pct(landGrowPct) + '/yr)', yen(yr19Land));
   detailHtml += bdRow('Land at Year 25', yen(yr25Land));
   detailHtml += '<div style="height:6px;"></div>';
-  detailHtml += bdRow('Building Today (est.)', yen(bldgVal));
-  detailHtml += bdRow('Building at Year 5 (' + depreciableLife + 'yr depr. period)', yen(yr5Bldg));
-  detailHtml += bdRow('Building at Year ' + depreciableLife + '+ (book value)', yen(0));
+  detailHtml += bdRow('Cap Rate Valuation Today (NOI/' + pct(exitCapRate) + ')', yen(noi / (exitCapRate / 100)));
+  detailHtml += bdRow('Cap Rate Valuation Yr 19 (NOI/' + pct(yr19Cap) + ')', yen(noi / (yr19Cap / 100)));
+  detailHtml += bdRow('Cap Rate Valuation Yr 25 (NOI/' + pct(yr25Cap) + ')', yen(noi / (yr25Cap / 100)));
   detailHtml += '<div style="height:6px;"></div>';
-  detailHtml += bdRow('Total Asset Today', yen(landVal + bldgVal), 'bd-sub');
-  detailHtml += bdRow('Total Asset at Year 5', yen(yr5Land + yr5Bldg), 'bd-sub');
-  detailHtml += bdRow('Total Asset at Year 25 (land only)', yen(yr25Land), 'bd-sub');
+  detailHtml += bdRow('Building Age at Year 19', (BLDG_AGE + 19) + ' years (past 47yr statutory life)');
+  detailHtml += bdRow('Building Age at Year 25', (BLDG_AGE + 25) + ' years');
+  detailHtml += bdRow('Demolition Cost (est.)', yen(demoCost));
   document.getElementById('exit-detail').innerHTML = detailHtml;
 }
 
@@ -971,7 +1000,7 @@ function bdRow(label, value, cls) {
     '<span>' + label + '</span><span>' + value + '</span></div>';
 }
 
-[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk, sTaxRate, sBldgRatio, sLand, sLandGrow, sBldg, sExitCap].forEach(el => {
+[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk, sTaxRate, sBldgRatio, sLand, sLandGrow, sBldg, sExitCap, sCapDrift, sDemo].forEach(el => {
   el.addEventListener('input', () => {
     activePreset = null;
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
