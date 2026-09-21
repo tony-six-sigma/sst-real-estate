@@ -401,7 +401,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
             <label>Building Ratio of Price</label>
             <span class="slider-val" id="v-bldgratio"></span>
           </div>
-          <input type="range" id="s-bldgratio" min="40" max="90" step="5" value="68">
+          <input type="range" id="s-bldgratio" min="40" max="90" step="1" value="48">
         </div>
       </div>
       <div class="breakdown" id="tax-breakdown"></div>
@@ -726,7 +726,7 @@ function recompute() {
   cashHtml += bdRow('  Savings Deposit (10%)', yen(savingsDeposit));
   cashHtml += bdRow('Total Cash Required', '<b>' + yen(totalCashRequired) + '</b>', 'bd-total');
   cashHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">';
-  cashHtml += '出資金 return: 3%/3yr, 2.5%/5yr, 2%/10yr dividend while held';
+  cashHtml += '出資金: refundable (6-12 months). Dividend ~2%/yr (variable, depends on credit union profit, not guaranteed).';
   cashHtml += '</div>';
   document.getElementById('cash-breakdown').innerHTML = cashHtml;
 
@@ -760,7 +760,7 @@ function recompute() {
     const amortRemaining = Math.max(0, remainingBalance(amortPortion, rate, term, term * 12));
     const totalBalloon = ioPortion + amortRemaining;
     const cumulativeCashFlow = annualCashFlow * term;
-    const savingsFromDividend = shusshikin * 0.025 * term;
+    const savingsFromDividend = shusshikin * 0.02 * term;
     const netPosition = cumulativeCashFlow + savingsDeposit + savingsFromDividend - totalBalloon;
 
     balloonHtml += bdRow('IO Principal (due at maturity)', yen(ioPortion));

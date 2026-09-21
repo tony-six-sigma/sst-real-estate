@@ -401,7 +401,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
             <label>建物比率</label>
             <span class="slider-val" id="v-bldgratio"></span>
           </div>
-          <input type="range" id="s-bldgratio" min="40" max="90" step="5" value="68">
+          <input type="range" id="s-bldgratio" min="40" max="90" step="1" value="48">
         </div>
       </div>
       <div class="breakdown" id="tax-breakdown"></div>
@@ -726,7 +726,7 @@ function recompute() {
   cashHtml += bdRow('  定期預金 (10%)', yen(savingsDeposit));
   cashHtml += bdRow('必要資金合計', '<b>' + yen(totalCashRequired) + '</b>', 'bd-total');
   cashHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">';
-  cashHtml += '出資金配当: 3年以内3%、5年以内2.5%、10年以内2%';
+  cashHtml += '出資金: 返還可能 (6~12ヶ月)。配当は信金の業績次第 (前年実績~2%、保証なし)。';
   cashHtml += '</div>';
   document.getElementById('cash-breakdown').innerHTML = cashHtml;
 
@@ -760,7 +760,7 @@ function recompute() {
     const amortRemaining = Math.max(0, remainingBalance(amortPortion, rate, term, term * 12));
     const totalBalloon = ioPortion + amortRemaining;
     const cumulativeCashFlow = annualCashFlow * term;
-    const savingsFromDividend = shusshikin * 0.025 * term;
+    const savingsFromDividend = shusshikin * 0.02 * term;
     const netPosition = cumulativeCashFlow + savingsDeposit + savingsFromDividend - totalBalloon;
 
     balloonHtml += bdRow('据置元金 (期末一括)', yen(ioPortion));
