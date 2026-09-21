@@ -146,8 +146,8 @@ input[type="range"] {
 .bd-row .neg { color: #dc2626; }
 .bd-row .pos { color: #059669; }
 
-.rate-table { margin-top: 12px; }
-.rate-table table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rate-table { margin-top: 12px; overflow-x: auto; }
+.rate-table table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 500px; }
 .rate-table th, .rate-table td {
   padding: 4px 8px;
   text-align: right;
@@ -385,6 +385,45 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
       <div class="breakdown" id="balloon-breakdown"></div>
     </div>
 
+    <div class="card">
+      <div class="card-title">Exit Scenario Analysis</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Land Value (est.)</label>
+            <span class="slider-val" id="v-land"></span>
+          </div>
+          <input type="range" id="s-land" min="50000000" max="200000000" step="5000000" value="100000000">
+        </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Land Appreciation/yr</label>
+            <span class="slider-val" id="v-landgrow"></span>
+          </div>
+          <input type="range" id="s-landgrow" min="-2.0" max="3.0" step="0.5" value="0.5">
+        </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Building Value (est.)</label>
+            <span class="slider-val" id="v-bldg"></span>
+          </div>
+          <input type="range" id="s-bldg" min="100000000" max="300000000" step="5000000" value="210000000">
+        </div>
+        <div class="slider-group" style="margin-bottom:0;">
+          <div class="slider-header">
+            <label>Cap Rate at Sale</label>
+            <span class="slider-val" id="v-exitcap"></span>
+          </div>
+          <input type="range" id="s-exitcap" min="6" max="15" step="0.5" value="10">
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
+        Building: RC 1992 (34yr old), 47yr tax life, 13yr remaining. Land: 所有権 (freehold, included).
+      </div>
+      <div class="rate-table" id="exit-table"></div>
+      <div class="breakdown" id="exit-detail" style="margin-top:12px;"></div>
+    </div>
+
   </div>
 </div>
 
@@ -451,6 +490,10 @@ const sOcc = document.getElementById('s-occ');
 const sExp = document.getElementById('s-exp');
 const sCapex = document.getElementById('s-capex');
 const sGk = document.getElementById('s-gk');
+const sLand = document.getElementById('s-land');
+const sLandGrow = document.getElementById('s-landgrow');
+const sBldg = document.getElementById('s-bldg');
+const sExitCap = document.getElementById('s-exitcap');
 
 const presets = {
   'over':     { loan: 340000000, amort: 220000000, rate: 4.0, term: 25, occ: 93, exp: 20, capex: 500000, gk: 450000 },
@@ -695,6 +738,85 @@ function recompute() {
     balloonHtml += '<div style="color:var(--muted);font-size:13px;">No balloon. Loan fully amortizes over ' + term + ' years.</div>';
   }
   document.getElementById('balloon-breakdown').innerHTML = balloonHtml;
+
+  // Exit scenario analysis
+  const landVal = parseFloat(sLand.value);
+  const landGrowPct = parseFloat(sLandGrow.value);
+  const bldgVal = parseFloat(sBldg.value);
+  const exitCapRate = parseFloat(sExitCap.value);
+
+  document.getElementById('v-land').textContent = yen(landVal);
+  document.getElementById('v-landgrow').textContent = pct(landGrowPct);
+  document.getElementById('v-bldg').textContent = yen(bldgVal);
+  document.getElementById('v-exitcap').textContent = pct(exitCapRate);
+
+  const RC_LIFE = 47;
+  const BUILDING_AGE = 34;
+  const remainingLife = Math.max(0, RC_LIFE - BUILDING_AGE);
+
+  const exitYears = [3, 5, 7, 10, 15, 20, 25];
+  let exitHtml = '<table><tr><th>Exit Yr</th><th>Est. Sale</th><th>Loan Bal.</th><th>Cum. CF</th><th>Net Profit</th><th>Total ROI</th><th>Ann. IRR</th></tr>';
+
+  exitYears.forEach(yr => {
+    if (yr > term) return;
+
+    const bldgRemLife = Math.max(0, remainingLife - yr);
+    const bldgDepreciated = remainingLife > 0 ? bldgVal * (bldgRemLife / remainingLife) : 0;
+    const landAtExit = landVal * Math.pow(1 + landGrowPct / 100, yr);
+
+    const noiAtExit = noi;
+    const capRateSale = noiAtExit / (exitCapRate / 100);
+    const assetSale = Math.max(landAtExit + bldgDepreciated, capRateSale);
+
+    const amortBal = amortPortion > 0 ? Math.max(0, remainingBalance(amortPortion, rate, term, yr * 12)) : 0;
+    const totalLoanBal = amortBal + ioPortion;
+
+    const cumCF = annualCashFlow * yr;
+    const saleProceeds = assetSale - totalLoanBal;
+    const netProfit = saleProceeds + cumCF - totalCashRequired;
+    const totalROI = totalCashRequired > 0 ? (netProfit / totalCashRequired) * 100 : 0;
+
+    const totalReturn = totalCashRequired + netProfit;
+    let annIRR = 0;
+    if (totalCashRequired > 0 && yr > 0 && totalReturn > 0) {
+      annIRR = (Math.pow(totalReturn / totalCashRequired, 1 / yr) - 1) * 100;
+    } else if (totalReturn <= 0) {
+      annIRR = -100;
+    }
+
+    const isProfit = netProfit > 0;
+    exitHtml += '<tr' + (yr === 5 || yr === 25 ? ' style="font-weight:600;"' : '') + '>' +
+      '<td style="text-align:left;">Year ' + yr + '</td>' +
+      '<td>' + yen(assetSale) + '</td>' +
+      '<td>' + yen(totalLoanBal) + '</td>' +
+      '<td>' + yen(cumCF) + '</td>' +
+      '<td style="color:' + (isProfit ? '#059669' : '#dc2626') + ';">' + yen(netProfit) + '</td>' +
+      '<td>' + pct(totalROI) + '</td>' +
+      '<td>' + pct(annIRR) + '</td>' +
+      '</tr>';
+  });
+  exitHtml += '</table>';
+  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Est. Sale = higher of (land + depreciated building) or (NOI / cap rate). Sale costs (仲介手数料 3%+tax, taxes) not deducted.</div>';
+  document.getElementById('exit-table').innerHTML = exitHtml;
+
+  const yr5Land = landVal * Math.pow(1 + landGrowPct / 100, 5);
+  const yr5BldgRem = Math.max(0, remainingLife - 5);
+  const yr5Bldg = remainingLife > 0 ? bldgVal * (yr5BldgRem / remainingLife) : 0;
+  const yr25Land = landVal * Math.pow(1 + landGrowPct / 100, 25);
+
+  let detailHtml = '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Value Trajectory</div>';
+  detailHtml += bdRow('Land Today (est.)', yen(landVal));
+  detailHtml += bdRow('Land at Year 5 (' + pct(landGrowPct) + '/yr)', yen(yr5Land));
+  detailHtml += bdRow('Land at Year 25', yen(yr25Land));
+  detailHtml += '<div style="height:6px;"></div>';
+  detailHtml += bdRow('Building Today (est.)', yen(bldgVal));
+  detailHtml += bdRow('Building at Year 5 (13yr rem. tax life)', yen(yr5Bldg));
+  detailHtml += bdRow('Building at Year 13+ (tax book value)', yen(0));
+  detailHtml += '<div style="height:6px;"></div>';
+  detailHtml += bdRow('Total Asset Today', yen(landVal + bldgVal), 'bd-sub');
+  detailHtml += bdRow('Total Asset at Year 5', yen(yr5Land + yr5Bldg), 'bd-sub');
+  detailHtml += bdRow('Total Asset at Year 25 (land only)', yen(yr25Land), 'bd-sub');
+  document.getElementById('exit-detail').innerHTML = detailHtml;
 }
 
 function bdRow(label, value, cls) {
@@ -702,7 +824,7 @@ function bdRow(label, value, cls) {
     '<span>' + label + '</span><span>' + value + '</span></div>';
 }
 
-[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk].forEach(el => {
+[sLoan, sAmort, sRate, sTerm, sOcc, sExp, sCapex, sGk, sLand, sLandGrow, sBldg, sExitCap].forEach(el => {
   el.addEventListener('input', () => {
     activePreset = null;
     document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
