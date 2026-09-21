@@ -930,8 +930,15 @@ function recompute() {
   document.getElementById('v-capdrift').textContent = '+' + capDrift.toFixed(2) + '%/年';
   document.getElementById('v-demo').textContent = yen(demoCost);
 
+  function prepayFeeRate(yr) {
+    if (yr <= 3) return 0.03;
+    if (yr <= 5) return 0.025;
+    if (yr <= 10) return 0.02;
+    return 0.01;
+  }
+
   const exitYears = [3, 5, 7, 10, 15, 19, 20, 25];
-  let exitHtml = '<table><tr><th>売却年</th><th>築年数</th><th>Cap Rate</th><th>推定売却額</th><th>残債</th><th>累計CF(税引後)</th><th>純損益</th><th>年間IRR</th></tr>';
+  let exitHtml = '<table><tr><th>売却年</th><th>築年数</th><th>Cap Rate</th><th>推定売却額</th><th>残債</th><th>繰上返済手数料</th><th>累計CF(税引後)</th><th>純損益</th><th>年間IRR</th></tr>';
 
   exitYears.forEach(yr => {
     if (yr > term) return;
@@ -943,8 +950,9 @@ function recompute() {
     const assetSale = Math.max(capRateSale, landAtExit) - yrDemo;
     const amortBal = amortPortion > 0 ? Math.max(0, remainingBalance(amortPortion, rate, term, yr * 12)) : 0;
     const totalLoanBal = amortBal + ioPortion;
+    const prepayFee = yr < term ? totalLoanBal * prepayFeeRate(yr) : 0;
     const cumCF = cumATCF[yr] || 0;
-    const saleProceeds = assetSale - totalLoanBal;
+    const saleProceeds = assetSale - totalLoanBal - prepayFee;
     const netProfit = saleProceeds + cumCF - totalCashRequired;
     const totalReturn = totalCashRequired + netProfit;
     let annIRR = 0;
@@ -961,13 +969,14 @@ function recompute() {
       '<td>' + pct(yrCapRate) + '</td>' +
       '<td>' + yen(assetSale) + '</td>' +
       '<td>' + yen(totalLoanBal) + '</td>' +
+      '<td>' + (prepayFee > 0 ? yen(prepayFee) : '--') + '</td>' +
       '<td>' + yen(cumCF) + '</td>' +
       '<td style="color:' + (isProfit ? '#059669' : '#dc2626') + ';">' + yen(netProfit) + '</td>' +
       '<td>' + (annIRR <= -100 ? 'n/a' : pct(annIRR)) + '</td>' +
       '</tr>';
   });
   exitHtml += '</table>';
-  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap Rateは年' + capDrift.toFixed(2) + '%上昇 (築年数増加に伴い融資困難化・買い手の償却メリット低下)。15年目で解体費50%、20年目以降100%控除。売却費用 (仲介手数料3%+税) は未控除。</div>';
+  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap Rateは年' + capDrift.toFixed(2) + '%上昇 (築年数増加に伴い融資困難化・買い手の償却メリット低下)。15年目で解体費50%、20年目以降100%控除。繰上返済手数料: 3% (0-3年), 2.5% (3-5年), 2% (5-10年), ~1% (10年以降)。売却費用 (仲介手数料3%+税) は未控除。</div>';
   document.getElementById('exit-table').innerHTML = exitHtml;
 
   const yr19Land = landVal * Math.pow(1 + landGrowPct / 100, 19);

@@ -933,8 +933,15 @@ function recompute() {
 
   const remainingLife = depreciableLife;
 
+  function prepayFeeRate(yr) {
+    if (yr <= 3) return 0.03;
+    if (yr <= 5) return 0.025;
+    if (yr <= 10) return 0.02;
+    return 0.01;
+  }
+
   const exitYears = [3, 5, 7, 10, 15, 19, 20, 25];
-  let exitHtml = '<table><tr><th>Exit Yr</th><th>Bldg Age</th><th>Cap Rate</th><th>Est. Sale</th><th>Loan Bal.</th><th>Cum. CF (AT)</th><th>Net Profit</th><th>Ann. IRR</th></tr>';
+  let exitHtml = '<table><tr><th>Exit Yr</th><th>Bldg Age</th><th>Cap Rate</th><th>Est. Sale</th><th>Loan Bal.</th><th>Prepay Fee</th><th>Cum. CF (AT)</th><th>Net Profit</th><th>Ann. IRR</th></tr>';
 
   exitYears.forEach(yr => {
     if (yr > term) return;
@@ -942,21 +949,19 @@ function recompute() {
     const bldgAge = BLDG_AGE + yr;
     const landAtExit = landVal * Math.pow(1 + landGrowPct / 100, yr);
 
-    // Cap rate increases with age (harder to finance, less depreciation for buyer)
     const yrCapRate = exitCapRate + (capDrift * yr);
     const capRateSale = noi / (yrCapRate / 100);
 
-    // Demolition reserve for very old buildings (yr 20+)
     const yrDemo = yr >= 20 ? demoCost : (yr >= 15 ? demoCost * 0.5 : 0);
 
-    // Asset value = higher of (cap rate valuation) or (land only), minus demolition
     const assetSale = Math.max(capRateSale, landAtExit) - yrDemo;
 
     const amortBal = amortPortion > 0 ? Math.max(0, remainingBalance(amortPortion, rate, term, yr * 12)) : 0;
     const totalLoanBal = amortBal + ioPortion;
+    const prepayFee = yr < term ? totalLoanBal * prepayFeeRate(yr) : 0;
 
     const cumCF = cumATCF[yr] || 0;
-    const saleProceeds = assetSale - totalLoanBal;
+    const saleProceeds = assetSale - totalLoanBal - prepayFee;
     const netProfit = saleProceeds + cumCF - totalCashRequired;
 
     const totalReturn = totalCashRequired + netProfit;
@@ -975,13 +980,14 @@ function recompute() {
       '<td>' + pct(yrCapRate) + '</td>' +
       '<td>' + yen(assetSale) + '</td>' +
       '<td>' + yen(totalLoanBal) + '</td>' +
+      '<td>' + (prepayFee > 0 ? yen(prepayFee) : '--') + '</td>' +
       '<td>' + yen(cumCF) + '</td>' +
       '<td style="color:' + (isProfit ? '#059669' : '#dc2626') + ';">' + yen(netProfit) + '</td>' +
       '<td>' + (annIRR <= -100 ? 'n/a' : pct(annIRR)) + '</td>' +
       '</tr>';
   });
   exitHtml += '</table>';
-  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap rate rises ' + capDrift.toFixed(2) + '%/yr (aging building = harder financing + less depreciation for buyer). Demolition reserve 50% at yr 15, 100% at yr 20+. Sale costs (仲介手数料 3%+tax) not deducted.</div>';
+  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap rate rises ' + capDrift.toFixed(2) + '%/yr (aging building = harder financing + less depreciation for buyer). Demolition reserve 50% at yr 15, 100% at yr 20+. Prepay fee: 3% (0-3yr), 2.5% (3-5yr), 2% (5-10yr), ~1% (10yr+). Sale costs (仲介手数料 3%+tax) not deducted.</div>';
   document.getElementById('exit-table').innerHTML = exitHtml;
 
   const yr5Land = landVal * Math.pow(1 + landGrowPct / 100, 5);
