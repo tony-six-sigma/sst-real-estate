@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Maison de Duke Scenario Modeler</title>
+<title>メゾン・ド・デューク シナリオモデラー</title>
 <style>
 :root {
   --bg: #fafaf7;
@@ -207,42 +207,42 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 </head>
 <body>
 
-<div style="text-align:right;margin-bottom:4px;"><a href="scenario-modeler.html" style="font-weight:700;color:var(--accent);text-decoration:none;font-size:12px;">English</a> <span style="color:var(--muted);font-size:12px;">|</span> <a href="scenario-modeler-jpn.html" style="color:var(--muted);text-decoration:none;font-size:12px;">日本語</a></div>
-<h1>Maison de Duke - Scenario Modeler</h1>
-<div class="subtitle">メゾン・ド・デューク | 名古屋市中川区 | RC 54戸 | 1992年築 (34年) | Broker: Aoyama Capital (佐藤)</div>
+<div style="text-align:right;margin-bottom:4px;"><a href="scenario-modeler.html" style="color:var(--muted);text-decoration:none;font-size:12px;">English</a> <span style="color:var(--muted);font-size:12px;">|</span> <a href="scenario-modeler-jpn.html" style="font-weight:700;color:var(--accent);text-decoration:none;font-size:12px;">日本語</a></div>
+<h1>メゾン・ド・デューク - シナリオモデラー</h1>
+<div class="subtitle">名古屋市中川区 | RC造 54戸 | 1992年築 (築34年) | 仲介: 青山キャピタル (佐藤)</div>
 
 <div class="grid">
   <!-- LEFT: Inputs -->
   <div class="inputs-col">
 
     <div class="card">
-      <div class="card-title">Property Fixed Data</div>
+      <div class="card-title">物件基本情報</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-        <div class="field"><div class="field-label">Asking</div><div class="field-value">¥310,000,000</div></div>
-        <div class="field"><div class="field-label">Units</div><div class="field-value">54 (2 office + 52 1R)</div></div>
-        <div class="field"><div class="field-label">Current Income</div><div class="field-value">¥27,556,680/yr</div></div>
-        <div class="field"><div class="field-label">Full Income</div><div class="field-value">¥29,653,080/yr</div></div>
-        <div class="field"><div class="field-label">Current Expenses</div><div class="field-value">¥5,407,796/yr</div></div>
-        <div class="field"><div class="field-label">Gross Yield</div><div class="field-value">8.89% / 9.57% full</div></div>
+        <div class="field"><div class="field-label">売出価格</div><div class="field-value">¥310,000,000</div></div>
+        <div class="field"><div class="field-label">戸数</div><div class="field-value">54戸 (事務所2 + 1R 52)</div></div>
+        <div class="field"><div class="field-label">現行賃料収入</div><div class="field-value">¥27,556,680/年</div></div>
+        <div class="field"><div class="field-label">満室賃料収入</div><div class="field-value">¥29,653,080/年</div></div>
+        <div class="field"><div class="field-label">現行経費</div><div class="field-value">¥5,407,796/年</div></div>
+        <div class="field"><div class="field-label">表面利回り</div><div class="field-value">8.89% / 9.57% 満室</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Preset Scenarios</div>
+      <div class="card-title">プリセットシナリオ</div>
       <div class="preset-row">
-        <button class="preset-btn" onclick="applyPreset('over')">Over-Loan ¥340M</button>
-        <button class="preset-btn" onclick="applyPreset('full')">Full-Loan ¥310M</button>
-        <button class="preset-btn" onclick="applyPreset('over-lite')">Over-Loan Lite ¥327M</button>
-        <button class="preset-btn" onclick="applyPreset('no-balloon')">No Balloon ¥310M</button>
+        <button class="preset-btn" onclick="applyPreset('over')">オーバーローン ¥340M</button>
+        <button class="preset-btn" onclick="applyPreset('full')">フルローン ¥310M</button>
+        <button class="preset-btn" onclick="applyPreset('over-lite')">ライトオーバー ¥327M</button>
+        <button class="preset-btn" onclick="applyPreset('no-balloon')">バルーンなし ¥310M</button>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">Loan Structure</div>
+      <div class="card-title">融資条件</div>
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Total Loan</label>
+          <label>借入総額</label>
           <span class="slider-val" id="v-loan"></span>
         </div>
         <input type="range" id="s-loan" min="250000000" max="350000000" step="1000000" value="310000000">
@@ -250,7 +250,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Amortizing Portion</label>
+          <label>元利均等部分</label>
           <span class="slider-val" id="v-amort"></span>
         </div>
         <input type="range" id="s-amort" min="0" max="350000000" step="1000000" value="190000000">
@@ -258,7 +258,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>IO (Balloon) Portion</label>
+          <label>元金据置(バルーン)部分</label>
           <span class="slider-val" id="v-io"></span>
         </div>
         <input type="range" id="s-io" min="0" max="200000000" step="1000000" value="120000000" disabled>
@@ -266,7 +266,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Interest Rate</label>
+          <label>金利</label>
           <span class="slider-val" id="v-rate"></span>
         </div>
         <input type="range" id="s-rate" min="2.0" max="7.0" step="0.1" value="4.0">
@@ -274,7 +274,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Loan Term</label>
+          <label>借入期間</label>
           <span class="slider-val" id="v-term"></span>
         </div>
         <input type="range" id="s-term" min="15" max="30" step="1" value="25">
@@ -282,11 +282,11 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
     </div>
 
     <div class="card">
-      <div class="card-title">Operating Assumptions</div>
+      <div class="card-title">運営前提</div>
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Occupancy Rate</label>
+          <label>入居率</label>
           <span class="slider-val" id="v-occ"></span>
         </div>
         <input type="range" id="s-occ" min="60" max="100" step="1" value="93">
@@ -294,7 +294,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Expense Ratio</label>
+          <label>経費率</label>
           <span class="slider-val" id="v-exp"></span>
         </div>
         <input type="range" id="s-exp" min="15" max="40" step="1" value="20">
@@ -302,7 +302,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>Annual CapEx Reserve</label>
+          <label>年間修繕積立金</label>
           <span class="slider-val" id="v-capex"></span>
         </div>
         <input type="range" id="s-capex" min="0" max="3000000" step="100000" value="500000">
@@ -310,7 +310,7 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
 
       <div class="slider-group">
         <div class="slider-header">
-          <label>GK Annual (税理士 + 均等割)</label>
+          <label>GK年間費用 (税理士 + 均等割)</label>
           <span class="slider-val" id="v-gk"></span>
         </div>
         <input type="range" id="s-gk" min="0" max="1000000" step="50000" value="450000">
@@ -322,83 +322,83 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
   <!-- RIGHT: Results -->
   <div class="results-col">
 
-    <div id="verdict" class="verdict-bar neutral">Adjust parameters to see results</div>
+    <div id="verdict" class="verdict-bar neutral">パラメータを調整してください</div>
 
     <div class="card" style="margin-top:12px;">
-      <div class="card-title">Key Metrics</div>
+      <div class="card-title">主要指標</div>
       <div class="results-grid">
         <div class="metric" id="m-cashflow">
-          <div class="metric-label">Annual Cash Flow</div>
+          <div class="metric-label">年間キャッシュフロー</div>
           <div class="metric-value" id="mv-cashflow">--</div>
           <div class="metric-sub" id="ms-cashflow"></div>
         </div>
         <div class="metric" id="m-repay">
-          <div class="metric-label">Repayment Ratio 返済比率</div>
+          <div class="metric-label">返済比率</div>
           <div class="metric-value" id="mv-repay">--</div>
-          <div class="metric-sub">Target: under 50%</div>
+          <div class="metric-sub">目標: 50%以下</div>
         </div>
         <div class="metric" id="m-netyield">
-          <div class="metric-label">Net Yield (on price)</div>
+          <div class="metric-label">実質利回り (対価格)</div>
           <div class="metric-value" id="mv-netyield">--</div>
           <div class="metric-sub" id="ms-netyield"></div>
         </div>
         <div class="metric" id="m-debtyield">
-          <div class="metric-label">Debt Yield</div>
+          <div class="metric-label">デットイールド</div>
           <div class="metric-value" id="mv-debtyield">--</div>
-          <div class="metric-sub">Target: over 8%</div>
+          <div class="metric-sub">目標: 8%以上</div>
         </div>
         <div class="metric" id="m-coc">
-          <div class="metric-label">Cash-on-Cash Return</div>
+          <div class="metric-label">自己資金利回り (CCR)</div>
           <div class="metric-value" id="mv-coc">--</div>
           <div class="metric-sub" id="ms-coc"></div>
         </div>
         <div class="metric" id="m-dscr">
-          <div class="metric-label">DSCR</div>
+          <div class="metric-label">DSCR (債務返済比率)</div>
           <div class="metric-value" id="mv-dscr">--</div>
-          <div class="metric-sub">Target: over 1.25x</div>
+          <div class="metric-sub">目標: 1.25x以上</div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <div class="card-title">P&L Breakdown (Annual)</div>
+      <div class="card-title">収支内訳 (年間)</div>
       <div class="breakdown" id="pnl-breakdown"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">Debt Service (Monthly)</div>
+      <div class="card-title">返済内訳 (月次)</div>
       <div class="breakdown" id="debt-breakdown"></div>
       <div class="balloon-viz" id="balloon-viz"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">Total Cash Required at Closing</div>
+      <div class="card-title">購入時必要資金</div>
       <div class="breakdown" id="cash-breakdown"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">Rate Sensitivity (Floating Rate Risk)</div>
+      <div class="card-title">金利感応度分析 (変動金利リスク)</div>
       <div class="rate-table" id="rate-table"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">25-Year Balloon Analysis</div>
+      <div class="card-title">25年バルーン分析</div>
       <div class="breakdown" id="balloon-breakdown"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">Tax & Depreciation (GK)</div>
+      <div class="card-title">税務・減価償却 (GK)</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Effective Tax Rate</label>
+            <label>実効税率</label>
             <span class="slider-val" id="v-taxrate"></span>
           </div>
           <input type="range" id="s-taxrate" min="20" max="40" step="1" value="33">
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Building Ratio of Price</label>
+            <label>建物比率</label>
             <span class="slider-val" id="v-bldgratio"></span>
           </div>
           <input type="range" id="s-bldgratio" min="40" max="90" step="5" value="68">
@@ -409,67 +409,67 @@ footer { margin-top: 20px; color: var(--muted); font-size: 11px; text-align: cen
     </div>
 
     <div class="card">
-      <div class="card-title">Exit Scenario Analysis</div>
+      <div class="card-title">出口(売却)シナリオ分析</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Land Value (est.)</label>
+            <label>土地価格 (推定)</label>
             <span class="slider-val" id="v-land"></span>
           </div>
           <input type="range" id="s-land" min="50000000" max="200000000" step="5000000" value="100000000">
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Land Appreciation/yr</label>
+            <label>地価変動率/年</label>
             <span class="slider-val" id="v-landgrow"></span>
           </div>
           <input type="range" id="s-landgrow" min="-2.0" max="3.0" step="0.5" value="0.5">
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Building Value (est.)</label>
+            <label>建物価格 (推定)</label>
             <span class="slider-val" id="v-bldg"></span>
           </div>
           <input type="range" id="s-bldg" min="100000000" max="300000000" step="5000000" value="210000000">
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Exit Cap Rate (today)</label>
+            <label>出口キャップレート</label>
             <span class="slider-val" id="v-exitcap"></span>
           </div>
           <input type="range" id="s-exitcap" min="6" max="15" step="0.5" value="10">
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Cap Rate Drift /yr</label>
+            <label>キャップレート上昇/年</label>
             <span class="slider-val" id="v-capdrift"></span>
           </div>
           <input type="range" id="s-capdrift" min="0" max="0.5" step="0.05" value="0.15">
         </div>
         <div class="slider-group" style="margin-bottom:0;">
           <div class="slider-header">
-            <label>Demolition Reserve (yr 20+)</label>
+            <label>解体費用積立 (20年目以降)</label>
             <span class="slider-val" id="v-demo"></span>
           </div>
           <input type="range" id="s-demo" min="0" max="50000000" step="5000000" value="25000000">
         </div>
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">
-        Building: RC 1992 (34yr old), 47yr statutory life, 19yr 中古 depreciation period. Land: 所有権 (freehold). Cap rate rises with age (financing harder, less buyer depreciation benefit). Demolition reserve deducted from year 20+ exit value.
+        建物: RC造 1992年築 (築34年)、法定耐用年数47年、中古資産償却期間19年。土地: 所有権。築年数に伴い買い手の融資・償却メリットが低下するためキャップレートは上昇。20年目以降の売却想定額から解体費用を控除。
       </div>
       <div class="rate-table" id="exit-table"></div>
       <div class="breakdown" id="exit-detail" style="margin-top:12px;"></div>
     </div>
 
     <div class="card">
-      <div class="card-title">Total Loan Cost</div>
+      <div class="card-title">融資総コスト</div>
       <div class="breakdown" id="loan-cost-breakdown"></div>
     </div>
 
   </div>
 </div>
 
-<footer>Maison de Duke Scenario Modeler | Data as of 2026-09-19 | Not financial advice</footer>
+<footer>メゾン・ド・デューク シナリオモデラー | データ: 2026年9月19日時点 | 投資助言ではありません</footer>
 
 <script>
 const ASKING = 310000000;
@@ -481,7 +481,7 @@ const CLOSING_FIXED = {
   '司法書士手数料': 250000,
   '印紙代': 130000,
   '不動産担保手数料': 110000,
-  '火災保険 (5yr)': 700000,
+  '火災保険 (5年)': 700000,
   '不動産取得税': 4824545,
 };
 const GK_SETUP = {
@@ -585,7 +585,7 @@ function recompute() {
   document.getElementById('v-amort').textContent = yen(amortPortion);
   document.getElementById('v-io').textContent = yen(ioPortion);
   document.getElementById('v-rate').textContent = pct(rate);
-  document.getElementById('v-term').textContent = term + ' years';
+  document.getElementById('v-term').textContent = term + '年';
   document.getElementById('v-occ').textContent = pct(occ, 0);
   document.getElementById('v-exp').textContent = pct(exp, 0);
   document.getElementById('v-capex').textContent = yen(capex);
@@ -627,20 +627,20 @@ function recompute() {
   const v = document.getElementById('verdict');
   if (annualCashFlow > 500000) {
     v.className = 'verdict-bar profit';
-    v.textContent = 'Profitable: ' + yen(annualCashFlow) + '/yr (' + yen(Math.round(annualCashFlow/12)) + '/mo)';
+    v.textContent = '黒字: ' + yen(annualCashFlow) + '/年 (' + yen(Math.round(annualCashFlow/12)) + '/月)';
   } else if (annualCashFlow > 0) {
     v.className = 'verdict-bar yellow';
-    v.textContent = 'Marginal: ' + yen(annualCashFlow) + '/yr (' + yen(Math.round(annualCashFlow/12)) + '/mo)';
+    v.textContent = '薄利: ' + yen(annualCashFlow) + '/年 (' + yen(Math.round(annualCashFlow/12)) + '/月)';
   } else {
     v.className = 'verdict-bar loss';
-    v.textContent = 'Negative: ' + yen(annualCashFlow) + '/yr (' + yen(Math.round(annualCashFlow/12)) + '/mo)';
+    v.textContent = '赤字: ' + yen(annualCashFlow) + '/年 (' + yen(Math.round(annualCashFlow/12)) + '/月)';
   }
 
   // Key metrics
   const mCf = document.getElementById('m-cashflow');
   mCf.className = 'metric ' + (annualCashFlow > 500000 ? 'green' : annualCashFlow > 0 ? 'yellow' : 'red');
   document.getElementById('mv-cashflow').textContent = yen(annualCashFlow);
-  document.getElementById('ms-cashflow').textContent = yen(Math.round(annualCashFlow / 12)) + '/mo';
+  document.getElementById('ms-cashflow').textContent = yen(Math.round(annualCashFlow / 12)) + '/月';
 
   const mR = document.getElementById('m-repay');
   mR.className = 'metric ' + (repaymentRatio < 50 ? 'green' : repaymentRatio < 60 ? 'yellow' : 'red');
@@ -649,7 +649,7 @@ function recompute() {
   const mNy = document.getElementById('m-netyield');
   mNy.className = 'metric ' + (netYield > 2 ? 'green' : netYield > 0 ? 'yellow' : 'red');
   document.getElementById('mv-netyield').textContent = pct(netYield);
-  document.getElementById('ms-netyield').textContent = 'NOI Yield: ' + pct(noi / ASKING * 100);
+  document.getElementById('ms-netyield').textContent = 'NOI利回り: ' + pct(noi / ASKING * 100);
 
   const mDy = document.getElementById('m-debtyield');
   mDy.className = 'metric ' + (debtYield >= 8 ? 'green' : debtYield >= 5 ? 'yellow' : 'red');
@@ -658,7 +658,7 @@ function recompute() {
   const mCoc = document.getElementById('m-coc');
   mCoc.className = 'metric ' + (cocReturn > 5 ? 'green' : cocReturn > 0 ? 'yellow' : 'red');
   document.getElementById('mv-coc').textContent = pct(cocReturn);
-  document.getElementById('ms-coc').textContent = 'On ' + yen(totalCashRequired) + ' deployed';
+  document.getElementById('ms-coc').textContent = '投下資金 ' + yen(totalCashRequired) + ' に対して';
 
   const mDscr = document.getElementById('m-dscr');
   mDscr.className = 'metric ' + (dscr >= 1.25 ? 'green' : dscr >= 1.0 ? 'yellow' : 'red');
@@ -666,24 +666,24 @@ function recompute() {
 
   // P&L breakdown
   document.getElementById('pnl-breakdown').innerHTML =
-    bdRow('Gross Income (full)', yen(FULL_INCOME)) +
-    bdRow('Occupancy Adj (' + pct(occ,0) + ')', '- ' + yen(FULL_INCOME - effIncome)) +
-    bdRow('Effective Income', yen(effIncome), 'bd-sub') +
-    bdRow('Operating Expenses (' + pct(exp,0) + ')', '- ' + yen(opExpenses)) +
-    bdRow('NOI', yen(noi), 'bd-sub') +
-    bdRow('Debt Service', '<span class="neg">- ' + yen(annualDebt) + '</span>') +
-    bdRow('CapEx Reserve', '- ' + yen(capex)) +
-    bdRow('GK Costs (税理士 + 均等割)', '- ' + yen(gkAnnual)) +
-    bdRow('Net Cash Flow', annualCashFlow >= 0
+    bdRow('満室賃料収入', yen(FULL_INCOME)) +
+    bdRow('空室損 (' + pct(occ,0) + '稼働)', '- ' + yen(FULL_INCOME - effIncome)) +
+    bdRow('実効賃料収入', yen(effIncome), 'bd-sub') +
+    bdRow('運営経費 (' + pct(exp,0) + ')', '- ' + yen(opExpenses)) +
+    bdRow('NOI (営業純利益)', yen(noi), 'bd-sub') +
+    bdRow('返済額', '<span class="neg">- ' + yen(annualDebt) + '</span>') +
+    bdRow('修繕積立金', '- ' + yen(capex)) +
+    bdRow('GK費用 (税理士 + 均等割)', '- ' + yen(gkAnnual)) +
+    bdRow('手取りキャッシュフロー', annualCashFlow >= 0
       ? '<span class="pos">' + yen(annualCashFlow) + '</span>'
       : '<span class="neg">' + yen(annualCashFlow) + '</span>', 'bd-total');
 
   // Debt breakdown
   document.getElementById('debt-breakdown').innerHTML =
-    bdRow('Amortizing (' + yen(amortPortion) + ')', yen(monthlyAmort) + '/mo') +
-    bdRow('Interest-Only (' + yen(ioPortion) + ')', yen(monthlyIO) + '/mo') +
-    bdRow('Total Monthly', yen(monthlyTotal) + '/mo', 'bd-sub') +
-    bdRow('Total Annual', yen(annualDebt) + '/yr', 'bd-sub');
+    bdRow('元利均等 (' + yen(amortPortion) + ')', yen(monthlyAmort) + '/月') +
+    bdRow('元金据置 (' + yen(ioPortion) + ')', yen(monthlyIO) + '/月') +
+    bdRow('月額合計', yen(monthlyTotal) + '/月', 'bd-sub') +
+    bdRow('年額合計', yen(annualDebt) + '/年', 'bd-sub');
 
   // Balloon viz
   const bviz = document.getElementById('balloon-viz');
@@ -691,14 +691,14 @@ function recompute() {
     const amortPct = (amortPortion / totalLoan * 100).toFixed(0);
     const ioPct = (ioPortion / totalLoan * 100).toFixed(0);
     bviz.innerHTML =
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">Loan Structure Split</div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;">融資構成比</div>' +
       '<div class="bar-container">' +
         '<div class="bar-amort" style="width:' + amortPct + '%"></div>' +
         '<div class="bar-io" style="width:' + ioPct + '%"></div>' +
       '</div>' +
       '<div class="bar-legend">' +
-        '<span class="leg-amort">Amortizing ' + amortPct + '%</span>' +
-        '<span class="leg-io">Interest-Only ' + ioPct + '%</span>' +
+        '<span class="leg-amort">元利均等 ' + amortPct + '%</span>' +
+        '<span class="leg-io">元金据置 ' + ioPct + '%</span>' +
       '</div>';
     bviz.style.display = '';
   } else {
@@ -708,31 +708,31 @@ function recompute() {
   // Cash required
   let cashHtml = '';
   if (equityNeeded > 0) {
-    cashHtml += bdRow('Down Payment (Price - Loan)', yen(equityNeeded));
+    cashHtml += bdRow('頭金 (売買価格 - 借入額)', yen(equityNeeded));
   }
-  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;">Closing Costs:</div>';
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;">諸費用:</div>';
   for (const k in CLOSING_FIXED) {
     cashHtml += bdRow('  ' + k, yen(CLOSING_FIXED[k]));
   }
   cashHtml += bdRow('  抵当権設定 (0.4%)', yen(mortgageReg));
   cashHtml += bdRow('  出資金 (2%)', yen(shusshikin));
-  cashHtml += bdRow('  融資手数料 (1.5%+tax)', yen(origFee));
-  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;">GK Setup (合同会社):</div>';
+  cashHtml += bdRow('  融資手数料 (1.5%+税)', yen(origFee));
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:6px 0 2px;">GK設立費用 (合同会社):</div>';
   for (const k in GK_SETUP) {
     if (GK_SETUP[k] > 0) cashHtml += bdRow('  ' + k, yen(GK_SETUP[k]));
   }
-  cashHtml += bdRow('Closing Subtotal', yen(closingTotal), 'bd-sub');
-  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:8px 0 2px;">Deposits (recoverable):</div>';
-  cashHtml += bdRow('  Savings Deposit (10%)', yen(savingsDeposit));
-  cashHtml += bdRow('Total Cash Required', '<b>' + yen(totalCashRequired) + '</b>', 'bd-total');
+  cashHtml += bdRow('諸費用小計', yen(closingTotal), 'bd-sub');
+  cashHtml += '<div style="font-size:11px;color:var(--muted);margin:8px 0 2px;">預け金 (返還可):</div>';
+  cashHtml += bdRow('  定期預金 (10%)', yen(savingsDeposit));
+  cashHtml += bdRow('必要資金合計', '<b>' + yen(totalCashRequired) + '</b>', 'bd-total');
   cashHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">';
-  cashHtml += '出資金 return: 3%/3yr, 2.5%/5yr, 2%/10yr dividend while held';
+  cashHtml += '出資金配当: 3年以内3%、5年以内2.5%、10年以内2%';
   cashHtml += '</div>';
   document.getElementById('cash-breakdown').innerHTML = cashHtml;
 
   // Rate sensitivity
   const rates = [3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0];
-  let rateHtml = '<table><tr><th>Rate</th><th>Monthly</th><th>Annual Debt</th><th>Cash Flow</th><th>返済比率</th></tr>';
+  let rateHtml = '<table><tr><th>金利</th><th>月額返済</th><th>年間返済</th><th>CF</th><th>返済比率</th></tr>';
   rates.forEach(r => {
     const mA = calcMonthlyAmort(amortPortion, r, term);
     const mI = calcMonthlyIO(ioPortion, r);
@@ -751,7 +751,7 @@ function recompute() {
       '</tr>';
   });
   rateHtml += '</table>';
-  rateHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">* Current rate. Floating rate reviewed every 6 months. No cap.</div>';
+  rateHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">* 現行金利。変動金利は6ヶ月毎に見直し。上限なし。</div>';
   document.getElementById('rate-table').innerHTML = rateHtml;
 
   // Balloon analysis
@@ -763,25 +763,25 @@ function recompute() {
     const savingsFromDividend = shusshikin * 0.025 * term;
     const netPosition = cumulativeCashFlow + savingsDeposit + savingsFromDividend - totalBalloon;
 
-    balloonHtml += bdRow('IO Principal (due at maturity)', yen(ioPortion));
-    balloonHtml += bdRow('Amortizing Remaining Balance', yen(amortRemaining));
-    balloonHtml += bdRow('Total Due at Year ' + term, yen(totalBalloon), 'bd-sub');
+    balloonHtml += bdRow('据置元金 (期末一括)', yen(ioPortion));
+    balloonHtml += bdRow('元利均等 残高', yen(amortRemaining));
+    balloonHtml += bdRow(term + '年目 返済総額', yen(totalBalloon), 'bd-sub');
     balloonHtml += '<div style="height:8px;"></div>';
-    balloonHtml += bdRow('Cumulative Cash Flow (' + term + 'yr)', yen(cumulativeCashFlow));
-    balloonHtml += bdRow('Savings Deposit (recovered)', yen(savingsDeposit));
-    balloonHtml += bdRow('Est. 出資金 Dividends', yen(savingsFromDividend));
-    balloonHtml += bdRow('Net Position at Maturity',
+    balloonHtml += bdRow('累計CF (' + term + '年)', yen(cumulativeCashFlow));
+    balloonHtml += bdRow('定期預金 (返還)', yen(savingsDeposit));
+    balloonHtml += bdRow('出資金配当 (推定)', yen(savingsFromDividend));
+    balloonHtml += bdRow('期末時点の純ポジション',
       (netPosition >= 0 ? '<span class="pos">' : '<span class="neg">') + yen(netPosition) + '</span>', 'bd-total');
     balloonHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">';
     if (netPosition < 0) {
-      balloonHtml += 'Shortfall of ' + yen(Math.abs(netPosition)) + ' must be covered by: refinancing, sale proceeds, or savings. ';
-      balloonHtml += 'Property would need to sell for at least ' + yen(totalBalloon) + ' to break even on the balloon.';
+      balloonHtml += '不足額 ' + yen(Math.abs(netPosition)) + ' は借り換え、売却代金、または自己資金で補填が必要。';
+      balloonHtml += 'バルーン返済のためには最低 ' + yen(totalBalloon) + ' での売却が必要。';
     } else {
-      balloonHtml += 'Cumulative cash flow covers the balloon with ' + yen(netPosition) + ' surplus.';
+      balloonHtml += '累計CFでバルーンをカバーし、' + yen(netPosition) + ' の余剰。';
     }
     balloonHtml += '</div>';
   } else {
-    balloonHtml += '<div style="color:var(--muted);font-size:13px;">No balloon. Loan fully amortizes over ' + term + ' years.</div>';
+    balloonHtml += '<div style="color:var(--muted);font-size:13px;">バルーンなし。' + term + '年で全額償還。</div>';
   }
   document.getElementById('balloon-breakdown').innerHTML = balloonHtml;
 
@@ -822,43 +822,43 @@ function recompute() {
   const yr1AfterTaxCF = annualCashFlow - yr1TotalTax;
 
   let taxHtml = '';
-  taxHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Year 1 Tax Position</div>';
-  taxHtml += bdRow('Depreciable Basis (building ' + pct(bldgRatioPct,0) + ' of price)', yen(depreciableBasis));
-  taxHtml += bdRow('中古 Depreciation Period', depreciableLife + ' years (定額法 ' + pct(depRate * 100) + '/yr)');
-  taxHtml += bdRow('Annual Depreciation', '<b>' + yen(annualDepreciation) + '</b>');
+  taxHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">1年目 税務ポジション</div>';
+  taxHtml += bdRow('償却対象額 (建物 ' + pct(bldgRatioPct,0) + ')', yen(depreciableBasis));
+  taxHtml += bdRow('中古資産 償却期間', depreciableLife + '年 (定額法 ' + pct(depRate * 100) + '/年)');
+  taxHtml += bdRow('年間減価償却費', '<b>' + yen(annualDepreciation) + '</b>');
   taxHtml += '<div style="height:8px;"></div>';
-  taxHtml += bdRow('Effective Rental Income', yen(effIncome));
-  taxHtml += bdRow('Operating Expenses', '- ' + yen(opExpenses));
-  taxHtml += bdRow('Interest Expense (deductible)', '- ' + yen(yr1Interest));
-  taxHtml += bdRow('Depreciation (non-cash)', '- ' + yen(annualDepreciation));
-  taxHtml += bdRow('GK Costs', '- ' + yen(gkAnnual));
-  taxHtml += bdRow('Taxable Income', yr1TaxableIncome >= 0
+  taxHtml += bdRow('実効賃料収入', yen(effIncome));
+  taxHtml += bdRow('運営経費', '- ' + yen(opExpenses));
+  taxHtml += bdRow('支払利息 (損金算入)', '- ' + yen(yr1Interest));
+  taxHtml += bdRow('減価償却費 (非資金)', '- ' + yen(annualDepreciation));
+  taxHtml += bdRow('GK費用', '- ' + yen(gkAnnual));
+  taxHtml += bdRow('課税所得', yr1TaxableIncome >= 0
     ? yen(yr1TaxableIncome)
-    : '<span class="pos">' + yen(yr1TaxableIncome) + ' (loss)</span>', 'bd-sub');
+    : '<span class="pos">' + yen(yr1TaxableIncome) + ' (欠損)</span>', 'bd-sub');
 
   if (yr1TaxableIncome < 0) {
-    taxHtml += '<div style="font-size:11px;color:#059669;margin:6px 0;">Paper loss of ' + yen(Math.abs(yr1TaxableIncome)) + '/yr. Cash-flow positive but tax-negative. Loss carries forward up to 10 years (GK).</div>';
-    taxHtml += bdRow('Tax Owed (均等割 minimum only)', yen(yr1MinTax));
+    taxHtml += '<div style="font-size:11px;color:#059669;margin:6px 0;">帳簿上の欠損 ' + yen(Math.abs(yr1TaxableIncome)) + '/年。CFは黒字だが税務上は赤字。欠損金は最大10年繰越可能 (GK/法人)。</div>';
+    taxHtml += bdRow('納税額 (均等割のみ)', yen(yr1MinTax));
   } else {
-    taxHtml += bdRow('Tax @ ' + pct(taxRatePct,0), yen(yr1Tax));
+    taxHtml += bdRow('税額 @ ' + pct(taxRatePct,0), yen(yr1Tax));
     if (yr1Tax < yr1MinTax) {
-      taxHtml += bdRow('均等割 minimum', yen(yr1MinTax));
+      taxHtml += bdRow('均等割 最低額', yen(yr1MinTax));
     }
-    taxHtml += bdRow('Total Tax', yen(yr1TotalTax), 'bd-sub');
+    taxHtml += bdRow('納税額合計', yen(yr1TotalTax), 'bd-sub');
   }
   taxHtml += '<div style="height:8px;"></div>';
-  taxHtml += bdRow('Pre-Tax Cash Flow', yen(annualCashFlow));
-  taxHtml += bdRow('Tax', '- ' + yen(yr1TotalTax));
-  taxHtml += bdRow('After-Tax Cash Flow', yr1AfterTaxCF >= 0
+  taxHtml += bdRow('税引前CF', yen(annualCashFlow));
+  taxHtml += bdRow('税金', '- ' + yen(yr1TotalTax));
+  taxHtml += bdRow('税引後CF', yr1AfterTaxCF >= 0
     ? '<span class="pos">' + yen(yr1AfterTaxCF) + '</span>'
     : '<span class="neg">' + yen(yr1AfterTaxCF) + '</span>', 'bd-total');
   taxHtml += '<div style="height:6px;"></div>';
-  taxHtml += bdRow('Principal Repayment (not deductible)', yen(yr1Principal));
-  taxHtml += bdRow('Of which: equity building', yen(yr1Principal));
+  taxHtml += bdRow('元金返済 (損金不算入)', yen(yr1Principal));
+  taxHtml += bdRow('うち: エクイティ積上', yen(yr1Principal));
 
   document.getElementById('tax-breakdown').innerHTML = taxHtml;
 
-  // Tax yearly table with proper 10-year loss carryforward
+  // Tax yearly table
   const lossPool = [];
   const showYears = [1,2,3,5,7,10,13,15,19,20,22,25];
   const cumATCF = [0];
@@ -898,21 +898,21 @@ function recompute() {
     taxData.push({ yr, yrInt, yrDep, yrTaxable, yrTax, yrATCF, hasLoss, poolTotal });
   }
 
-  let taxYrHtml = '<table><tr><th>Year</th><th>Interest</th><th>Deprec.</th><th>Taxable</th><th>Tax</th><th>After-Tax CF</th></tr>';
+  let taxYrHtml = '<table><tr><th>年</th><th>支払利息</th><th>償却費</th><th>課税所得</th><th>税金</th><th>税引後CF</th></tr>';
   taxData.forEach(d => {
     if (!showYears.includes(d.yr)) return;
     const isDep = d.yr <= depreciableLife;
     taxYrHtml += '<tr' + (d.yr === 1 || d.yr === depreciableLife || d.yr === depreciableLife + 1 ? ' style="font-weight:600;"' : '') + '>' +
-      '<td style="text-align:left;">Yr ' + d.yr + (d.yr === depreciableLife ? ' *' : '') + '</td>' +
+      '<td style="text-align:left;">' + d.yr + '年' + (d.yr === depreciableLife ? ' *' : '') + '</td>' +
       '<td>' + yen(d.yrInt) + '</td>' +
-      '<td>' + (isDep ? yen(d.yrDep) : '<span style="color:var(--muted);">ended</span>') + '</td>' +
-      '<td>' + (d.hasLoss ? '<span class="pos">loss (' + yen(d.poolTotal) + ' pool)</span>' : yen(d.yrTaxable)) + '</td>' +
+      '<td>' + (isDep ? yen(d.yrDep) : '<span style="color:var(--muted);">終了</span>') + '</td>' +
+      '<td>' + (d.hasLoss ? '<span class="pos">欠損 (' + yen(d.poolTotal) + ' 繰越)</span>' : yen(d.yrTaxable)) + '</td>' +
       '<td>' + yen(d.yrTax) + '</td>' +
       '<td style="color:' + (d.yrATCF >= 0 ? '#059669' : '#dc2626') + ';">' + yen(d.yrATCF) + '</td>' +
       '</tr>';
   });
   taxYrHtml += '</table>';
-  taxYrHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">* Depreciation ends at year ' + depreciableLife + '. Losses carry forward 10yr (GK/法人 繰越欠損金). 均等割 ¥70K/yr minimum even in loss years.</div>';
+  taxYrHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">* ' + depreciableLife + '年目で償却終了。繰越欠損金は10年繰越可能 (GK/法人)。均等割 ¥70,000/年は欠損でも課税。</div>';
   document.getElementById('tax-yearly').innerHTML = taxYrHtml;
 
   // Exit scenario analysis
@@ -920,7 +920,6 @@ function recompute() {
   const landGrowPct = parseFloat(sLandGrow.value);
   const bldgVal = parseFloat(sBldg.value);
   const exitCapRate = parseFloat(sExitCap.value);
-
   const capDrift = parseFloat(sCapDrift.value);
   const demoCost = parseFloat(sDemo.value);
 
@@ -928,37 +927,25 @@ function recompute() {
   document.getElementById('v-landgrow').textContent = pct(landGrowPct);
   document.getElementById('v-bldg').textContent = yen(bldgVal);
   document.getElementById('v-exitcap').textContent = pct(exitCapRate);
-  document.getElementById('v-capdrift').textContent = '+' + capDrift.toFixed(2) + '%/yr';
+  document.getElementById('v-capdrift').textContent = '+' + capDrift.toFixed(2) + '%/年';
   document.getElementById('v-demo').textContent = yen(demoCost);
 
-  const remainingLife = depreciableLife;
-
   const exitYears = [3, 5, 7, 10, 15, 19, 20, 25];
-  let exitHtml = '<table><tr><th>Exit Yr</th><th>Bldg Age</th><th>Cap Rate</th><th>Est. Sale</th><th>Loan Bal.</th><th>Cum. CF (AT)</th><th>Net Profit</th><th>Ann. IRR</th></tr>';
+  let exitHtml = '<table><tr><th>売却年</th><th>築年数</th><th>Cap Rate</th><th>推定売却額</th><th>残債</th><th>累計CF(税引後)</th><th>純損益</th><th>年間IRR</th></tr>';
 
   exitYears.forEach(yr => {
     if (yr > term) return;
-
     const bldgAge = BLDG_AGE + yr;
     const landAtExit = landVal * Math.pow(1 + landGrowPct / 100, yr);
-
-    // Cap rate increases with age (harder to finance, less depreciation for buyer)
     const yrCapRate = exitCapRate + (capDrift * yr);
     const capRateSale = noi / (yrCapRate / 100);
-
-    // Demolition reserve for very old buildings (yr 20+)
     const yrDemo = yr >= 20 ? demoCost : (yr >= 15 ? demoCost * 0.5 : 0);
-
-    // Asset value = higher of (cap rate valuation) or (land only), minus demolition
     const assetSale = Math.max(capRateSale, landAtExit) - yrDemo;
-
     const amortBal = amortPortion > 0 ? Math.max(0, remainingBalance(amortPortion, rate, term, yr * 12)) : 0;
     const totalLoanBal = amortBal + ioPortion;
-
     const cumCF = cumATCF[yr] || 0;
     const saleProceeds = assetSale - totalLoanBal;
     const netProfit = saleProceeds + cumCF - totalCashRequired;
-
     const totalReturn = totalCashRequired + netProfit;
     let annIRR = 0;
     if (totalCashRequired > 0 && yr > 0 && totalReturn > 0) {
@@ -966,12 +953,11 @@ function recompute() {
     } else if (totalReturn <= 0) {
       annIRR = -100;
     }
-
     const isProfit = netProfit > 0;
     const highlight = yr === 19 || yr === 25;
     exitHtml += '<tr' + (highlight ? ' style="font-weight:600;"' : '') + '>' +
-      '<td style="text-align:left;">Year ' + yr + '</td>' +
-      '<td>' + bldgAge + 'yr</td>' +
+      '<td style="text-align:left;">' + yr + '年目</td>' +
+      '<td>築' + bldgAge + '年</td>' +
       '<td>' + pct(yrCapRate) + '</td>' +
       '<td>' + yen(assetSale) + '</td>' +
       '<td>' + yen(totalLoanBal) + '</td>' +
@@ -981,28 +967,26 @@ function recompute() {
       '</tr>';
   });
   exitHtml += '</table>';
-  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap rate rises ' + capDrift.toFixed(2) + '%/yr (aging building = harder financing + less depreciation for buyer). Demolition reserve 50% at yr 15, 100% at yr 20+. Sale costs (仲介手数料 3%+tax) not deducted.</div>';
+  exitHtml += '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Cap Rateは年' + capDrift.toFixed(2) + '%上昇 (築年数増加に伴い融資困難化・買い手の償却メリット低下)。15年目で解体費50%、20年目以降100%控除。売却費用 (仲介手数料3%+税) は未控除。</div>';
   document.getElementById('exit-table').innerHTML = exitHtml;
 
-  const yr5Land = landVal * Math.pow(1 + landGrowPct / 100, 5);
   const yr19Land = landVal * Math.pow(1 + landGrowPct / 100, 19);
   const yr25Land = landVal * Math.pow(1 + landGrowPct / 100, 25);
-  const yr5Cap = exitCapRate + capDrift * 5;
   const yr19Cap = exitCapRate + capDrift * 19;
   const yr25Cap = exitCapRate + capDrift * 25;
 
-  let detailHtml = '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Value Trajectory</div>';
-  detailHtml += bdRow('Land Today (est.)', yen(landVal));
-  detailHtml += bdRow('Land at Year 19 (' + pct(landGrowPct) + '/yr)', yen(yr19Land));
-  detailHtml += bdRow('Land at Year 25', yen(yr25Land));
+  let detailHtml = '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">資産価値推移</div>';
+  detailHtml += bdRow('現在の土地価格 (推定)', yen(landVal));
+  detailHtml += bdRow('19年目 土地価格 (' + pct(landGrowPct) + '/年)', yen(yr19Land));
+  detailHtml += bdRow('25年目 土地価格', yen(yr25Land));
   detailHtml += '<div style="height:6px;"></div>';
-  detailHtml += bdRow('Cap Rate Valuation Today (NOI/' + pct(exitCapRate) + ')', yen(noi / (exitCapRate / 100)));
-  detailHtml += bdRow('Cap Rate Valuation Yr 19 (NOI/' + pct(yr19Cap) + ')', yen(noi / (yr19Cap / 100)));
-  detailHtml += bdRow('Cap Rate Valuation Yr 25 (NOI/' + pct(yr25Cap) + ')', yen(noi / (yr25Cap / 100)));
+  detailHtml += bdRow('Cap Rate評価額 現在 (NOI/' + pct(exitCapRate) + ')', yen(noi / (exitCapRate / 100)));
+  detailHtml += bdRow('Cap Rate評価額 19年目 (NOI/' + pct(yr19Cap) + ')', yen(noi / (yr19Cap / 100)));
+  detailHtml += bdRow('Cap Rate評価額 25年目 (NOI/' + pct(yr25Cap) + ')', yen(noi / (yr25Cap / 100)));
   detailHtml += '<div style="height:6px;"></div>';
-  detailHtml += bdRow('Building Age at Year 19', (BLDG_AGE + 19) + ' years (past 47yr statutory life)');
-  detailHtml += bdRow('Building Age at Year 25', (BLDG_AGE + 25) + ' years');
-  detailHtml += bdRow('Demolition Cost (est.)', yen(demoCost));
+  detailHtml += bdRow('19年目の築年数', '築' + (BLDG_AGE + 19) + '年 (法定耐用年数47年超過)');
+  detailHtml += bdRow('25年目の築年数', '築' + (BLDG_AGE + 25) + '年');
+  detailHtml += bdRow('解体費用 (推定)', yen(demoCost));
   document.getElementById('exit-detail').innerHTML = detailHtml;
 
   // Total Loan Cost
@@ -1018,31 +1002,31 @@ function recompute() {
   const balloonDue = ioPortion;
 
   let lcHtml = '';
-  lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Amortizing Portion (' + yen(amortPortion) + ')</div>';
-  lcHtml += bdRow('Monthly Payment', yen(monthlyAmort) + '/mo');
-  lcHtml += bdRow('Annual Payment', yen(monthlyAmort * 12) + '/yr');
-  lcHtml += bdRow('Total Paid (' + term + ' years)', yen(totalPaidAmort));
-  lcHtml += bdRow('Principal Repaid', yen(amortPortion));
-  lcHtml += bdRow('Interest Paid', '<span class="neg">' + yen(totalInterestAmort) + '</span>');
+  lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">元利均等部分 (' + yen(amortPortion) + ')</div>';
+  lcHtml += bdRow('月額返済', yen(monthlyAmort) + '/月');
+  lcHtml += bdRow('年額返済', yen(monthlyAmort * 12) + '/年');
+  lcHtml += bdRow('総返済額 (' + term + '年)', yen(totalPaidAmort));
+  lcHtml += bdRow('元金返済', yen(amortPortion));
+  lcHtml += bdRow('利息合計', '<span class="neg">' + yen(totalInterestAmort) + '</span>');
   if (ioPortion > 0) {
     lcHtml += '<div style="height:10px;"></div>';
-    lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">IO Balloon Portion (' + yen(ioPortion) + ')</div>';
-    lcHtml += bdRow('Monthly Interest', yen(monthlyIO) + '/mo');
-    lcHtml += bdRow('Annual Interest', yen(monthlyIO * 12) + '/yr');
-    lcHtml += bdRow('Total Interest Paid (' + term + ' years)', '<span class="neg">' + yen(totalPaidIO) + '</span>');
-    lcHtml += bdRow('Balloon Due at Year ' + term, '<span class="neg">' + yen(balloonDue) + '</span>');
+    lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">元金据置部分 (' + yen(ioPortion) + ')</div>';
+    lcHtml += bdRow('月額利息', yen(monthlyIO) + '/月');
+    lcHtml += bdRow('年額利息', yen(monthlyIO * 12) + '/年');
+    lcHtml += bdRow('利息合計 (' + term + '年)', '<span class="neg">' + yen(totalPaidIO) + '</span>');
+    lcHtml += bdRow('バルーン元金 (' + term + '年目)', '<span class="neg">' + yen(balloonDue) + '</span>');
   }
   lcHtml += '<div style="height:10px;"></div>';
-  lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">Combined Total</div>';
+  lcHtml += '<div style="font-size:12px;font-weight:600;margin-bottom:6px;">合計</div>';
   const grandTotal = totalPaidAll + balloonDue;
   const equivRate = (Math.pow(grandTotal / totalLoan, 1 / term) - 1) * 100;
-  lcHtml += bdRow('Total Payments (' + term + ' years)', yen(totalPaidAll));
-  lcHtml += bdRow('Total Interest Paid', '<span class="neg">' + yen(totalInterestAll) + '</span>');
+  lcHtml += bdRow('総返済額 (' + term + '年)', yen(totalPaidAll));
+  lcHtml += bdRow('利息合計', '<span class="neg">' + yen(totalInterestAll) + '</span>');
   if (ioPortion > 0) {
-    lcHtml += bdRow('Balloon Principal Due', '<span class="neg">' + yen(balloonDue) + '</span>');
+    lcHtml += bdRow('バルーン元金', '<span class="neg">' + yen(balloonDue) + '</span>');
   }
-  lcHtml += bdRow('Total Paid (payments + balloon)', '<span class="neg">' + yen(grandTotal) + '</span>', 'bd-total');
-  lcHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">You borrow ' + yen(totalLoan) + ' and pay back ' + yen(grandTotal) + ' total. Equivalent compound rate: ' + pct(equivRate) + '/yr.</div>';
+  lcHtml += bdRow('総支払額 (返済 + バルーン)', '<span class="neg">' + yen(grandTotal) + '</span>', 'bd-total');
+  lcHtml += '<div style="font-size:11px;color:var(--muted);margin-top:8px;">' + yen(totalLoan) + ' を借入し、総額 ' + yen(grandTotal) + ' を支払い。実質複利: ' + pct(equivRate) + '/年。</div>';
 
   document.getElementById('loan-cost-breakdown').innerHTML = lcHtml;
 }
